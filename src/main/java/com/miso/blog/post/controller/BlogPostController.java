@@ -7,6 +7,9 @@ import com.miso.blog.post.dto.BlogPostVersionResponse;
 import com.miso.blog.post.dto.CreateBlogPostRequest;
 import com.miso.blog.post.dto.UpdateBlogPostRequest;
 import com.miso.blog.post.service.BlogPostService;
+import com.miso.blog.publish.dto.PublishGithubPagesRequest;
+import com.miso.blog.publish.dto.PublishGithubPagesResponse;
+import com.miso.blog.publish.service.BlogPostPublishService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -27,6 +30,7 @@ import java.util.List;
 @Tag(name = "블로그 글", description = "AI 또는 수동으로 생성한 Markdown 블로그 글을 관리합니다.")
 public class BlogPostController {
     private final BlogPostService blogPostService;
+    private final BlogPostPublishService blogPostPublishService;
 
     @PostMapping("/draft/manual")
     @Operation(summary = "수동 블로그 초안 생성", description = "Git/AI 연동 전에도 Markdown 초안을 저장할 수 있습니다.")
@@ -77,5 +81,14 @@ public class BlogPostController {
     @Operation(summary = "블로그 글 발행 완료 처리", description = "실제 GitHub Pages 연동 전까지는 상태만 PUBLISHED로 전환합니다.")
     public ApiDataResponse<BlogPostResponse> markPublished(@PathVariable Long blogPostId) {
         return ApiDataResponse.ok(blogPostService.markPublished(blogPostId));
+    }
+
+    @PostMapping("/{blogPostId}/publish/github-pages")
+    @Operation(summary = "GitHub Pages 발행", description = "승인된 Markdown 글을 GitHub Pages 저장소의 _posts 경로에 commit합니다.")
+    public ApiDataResponse<PublishGithubPagesResponse> publishToGitHubPages(
+            @PathVariable Long blogPostId,
+            @RequestBody(required = false) PublishGithubPagesRequest request
+    ) {
+        return ApiDataResponse.ok(blogPostPublishService.publishToGitHubPages(blogPostId, request));
     }
 }
