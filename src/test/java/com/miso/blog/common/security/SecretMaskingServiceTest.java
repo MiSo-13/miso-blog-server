@@ -10,19 +10,21 @@ class SecretMaskingServiceTest {
 
     @Test
     void maskHidesCommonApiKeysAndPasswords() {
+        String openAiKey = "sk-" + "proj-" + "abcdefghijklmnopqrstuvwxyz123456";
+        String githubToken = "ghp_" + "abcdefghijklmnopqrstuvwxyz123456";
         String source = """
-                blog.ai.api-key: openai-test-key-value
-                github.token=github-test-token-value
+                blog.ai.api-key: %s
+                github.token=%s
                 spring.datasource.password: local-secret
                 {"access_token":"json-token-value"}
                 Authorization: Bearer bearer-token-value
-                """;
+                """.formatted(openAiKey, githubToken);
 
         String masked = secretMaskingService.mask(source);
 
         assertTrue(masked.contains("[MASKED]"));
-        assertFalse(masked.contains("openai-test-key-value"));
-        assertFalse(masked.contains("github-test-token-value"));
+        assertFalse(masked.contains(openAiKey));
+        assertFalse(masked.contains(githubToken));
         assertFalse(masked.contains("local-secret"));
         assertFalse(masked.contains("json-token-value"));
         assertFalse(masked.contains("bearer-token-value"));
