@@ -33,61 +33,91 @@
 GET /api/system/health
 ```
 
-## Git 저장소 분석
+## 로컬 Git 저장소 분석
 
-private GitHub 저장소를 등록하고 최근 commit patch를 OpenAI로 분석해 키워드, 글감 후보, Markdown 초안을 생성합니다.
+기본 추천 흐름입니다. 로컬에 clone된 repo를 서버가 직접 `git log`, `git show`, `git diff`로 읽고, 기본값인 `LOCAL_ONLY` 모드에서는 외부 AI로 코드를 전송하지 않습니다.
 
-주의: 이 기능은 commit message와 patch 일부를 OpenAI API로 전송합니다. 프론트에서는 “private repo 분석” 실행 전에 이 점을 사용자에게 명확히 보여주는 것이 좋습니다.
-
-### 저장소 등록
+### 로컬 저장소 등록
 
 ```http
-POST /api/git-repositories
+POST /api/local-repositories
 ```
 
 ```json
 {
-  "repositoryFullName": "owner/private-repo",
+  "name": "magi-platform",
+  "localPath": "C:\\pjt\\magi-platform",
   "defaultBranch": "main",
-  "description": "개인 프로젝트 서버",
+  "description": "개인 프로젝트",
   "active": true
 }
 ```
 
-### 저장소 목록/상세/수정
+### 로컬 저장소 목록/상세/수정
 
 ```http
-GET /api/git-repositories
-GET /api/git-repositories/{repositoryId}
-PATCH /api/git-repositories/{repositoryId}
+GET /api/local-repositories
+GET /api/local-repositories/{repositoryId}
+PATCH /api/local-repositories/{repositoryId}
 ```
 
-### 저장소 AI 분석
+### LOCAL_ONLY 분석
 
 ```http
-POST /api/git-repositories/{repositoryId}/analyze
+POST /api/local-repositories/{repositoryId}/analyze
 ```
 
 ```json
 {
-  "commitLimit": 10,
+  "commitLimit": 20,
+  "includeUncommittedChanges": true,
+  "analysisMode": "LOCAL_ONLY",
   "focus": "내가 구현한 기능과 트러블슈팅 포인트를 개발 블로그 글감으로 많이 뽑아줘",
-  "createBlogPost": true
+  "createBlogPost": false
 }
 ```
 
 응답에는 다음 정보가 포함됩니다.
 
-- `analysisSummary`: 최근 구현 흐름 요약
-- `keywords`: 구체적인 기술 키워드
-- `topicCandidates`: 블로그 글감 후보 목록
-- `recommendedTitle`: 추천 글 제목
-- `draftMarkdown`: 가장 좋은 주제의 Markdown 초안
-- `createdBlogPostId`: `createBlogPost=true`일 때 생성된 블로그 글 ID
+- `sourceSummary`: 로컬 git 명령으로 만든 분석 근거
+- `analysisSummary`: 로컬 분석 요약
+- `keywords`: 기술 키워드 후보
+- `topicCandidates`: 블로그 글감 후보
+- `recommendedTitle`: 추천 제목
+- `draftMarkdown`: 로컬 분석 기반 Markdown 초안
 
-### 분석 결과 조회
+### OPENAI 분석
+
+```json
+{
+  "commitLimit": 10,
+  "includeUncommittedChanges": false,
+  "analysisMode": "OPENAI",
+  "focus": "운영에서 겪은 설계 판단 중심으로 정리",
+  "createBlogPost": true
+}
+```
+
+주의: `OPENAI` 모드는 `sourceSummary`를 OpenAI API로 전송합니다. 프론트에서는 실행 전 전송 동의 UI를 보여주는 것이 좋습니다.
+
+### 로컬 분석 결과 조회
 
 ```http
+GET /api/local-repositories/{repositoryId}/analysis-reports
+GET /api/local-repositories/analysis-reports/{reportId}
+POST /api/local-repositories/analysis-reports/{reportId}/blog-post
+```
+
+## GitHub 저장소 분석
+
+private GitHub 저장소를 GitHub API로 읽고 OpenAI로 분석합니다. 보안상 기본 흐름은 로컬 Git 분석을 권장합니다.
+
+```http
+POST /api/git-repositories
+GET /api/git-repositories
+GET /api/git-repositories/{repositoryId}
+PATCH /api/git-repositories/{repositoryId}
+POST /api/git-repositories/{repositoryId}/analyze
 GET /api/git-repositories/{repositoryId}/analysis-reports
 GET /api/git-repositories/analysis-reports/{reportId}
 POST /api/git-repositories/analysis-reports/{reportId}/blog-post
@@ -142,34 +172,6 @@ POST /api/publish-targets
 PATCH /api/publish-targets/{targetId}
 ```
 
-GitHub Pages 대상 예시:
-
-```json
-{
-  "channel": "GITHUB_PAGES",
-  "role": "PRIMARY",
-  "name": "My GitHub Pages Blog",
-  "baseUrl": "https://blog.example.com",
-  "repositoryFullName": "owner/blog.example.com",
-  "branchName": "main",
-  "contentRootPath": "_posts",
-  "customDomain": "blog.example.com",
-  "active": true
-}
-```
-
-Velog 대상 예시:
-
-```json
-{
-  "channel": "VELOG",
-  "role": "EXPOSURE",
-  "name": "Velog",
-  "baseUrl": "https://velog.io/@username",
-  "active": true
-}
-```
-
 ## OpenAI 운영 API
 
 ```http
@@ -181,8 +183,8 @@ GET /api/admin/openai/estimate?model=gpt-4.1-mini&inputTokens=10000&cachedInputT
 
 ## 프론트 구현 메모
 
-- Git 분석 실행은 비용이 발생하므로 commit 개수 선택 UI를 둡니다.
+- 기본 분석 버튼은 `LOCAL_ONLY`로 둡니다.
+- `OPENAI` 분석은 “코드 요약이 외부 AI로 전송됩니다” 확인 후 실행하게 만듭니다.
 - 분석 결과 화면은 키워드, 글감 후보 카드, 추천 초안 Markdown 미리보기로 나누면 좋습니다.
 - 글감 후보는 `sourceFiles`를 함께 보여줘야 사용자가 “내가 실제로 구현한 내용”인지 빠르게 확인할 수 있습니다.
-- 블로그 초안 화면은 Markdown 에디터, 태그 입력, source note, 버전 이력을 함께 보여주면 됩니다.
 - 발행 설정 화면은 GitHub Pages 카드와 Velog 카드로 나누고, GitHub Pages를 기본 발행 대상으로 강조하면 됩니다.
