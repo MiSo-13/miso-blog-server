@@ -7,6 +7,7 @@ import com.miso.blog.localrepo.dto.LocalRepositoryAnalysisReportResponse;
 import com.miso.blog.localrepo.dto.LocalRepositoryResponse;
 import com.miso.blog.localrepo.dto.UpdateLocalRepositoryRequest;
 import com.miso.blog.localrepo.service.LocalRepositoryAnalysisService;
+import com.miso.blog.post.dto.CreateBlogPostFromAnalysisRequest;
 import com.miso.blog.post.dto.BlogPostResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -81,5 +82,14 @@ public class LocalRepositoryController {
     @Operation(summary = "로컬 Git 분석 결과를 블로그 초안으로 전환")
     public ApiDataResponse<BlogPostResponse> createBlogPostFromReport(@PathVariable Long reportId) {
         return ApiDataResponse.ok(localRepositoryAnalysisService.createBlogPostFromReport(reportId));
+    }
+
+    @PostMapping("/analysis-reports/{reportId}/write-blog-post")
+    @Operation(summary = "선택 키워드 기반 블로그 글 작성", description = "분석 결과에서 키워드와 주제를 선택해 더 좋은 블로그 초안을 생성합니다.")
+    public ApiDataResponse<BlogPostResponse> writeBlogPostFromReport(
+            @PathVariable Long reportId,
+            @Valid @RequestBody CreateBlogPostFromAnalysisRequest request
+    ) {
+        return ApiDataResponse.ok(localRepositoryAnalysisService.writeBlogPostFromReport(reportId, request));
     }
 }

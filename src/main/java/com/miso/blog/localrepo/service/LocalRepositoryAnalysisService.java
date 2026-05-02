@@ -21,6 +21,11 @@ import com.miso.blog.localrepo.repository.LocalRepositoryAnalysisReportRepositor
 import com.miso.blog.localrepo.repository.LocalRepositoryRepository;
 import com.miso.blog.post.dto.BlogPostResponse;
 import com.miso.blog.post.dto.CreateBlogPostRequest;
+import com.miso.blog.post.dto.CreateBlogPostFromAnalysisRequest;
+import com.miso.blog.post.dto.GeneratedBlogDraft;
+import com.miso.blog.post.code.BlogWritingMode;
+import com.miso.blog.post.service.LocalBlogDraftComposer;
+import com.miso.blog.post.service.OpenAiBlogDraftComposer;
 import com.miso.blog.post.service.BlogPostService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -39,6 +44,8 @@ public class LocalRepositoryAnalysisService {
     private final LocalOnlyRepositoryAnalyzer localOnlyRepositoryAnalyzer;
     private final OpenAiGitAnalysisClient openAiGitAnalysisClient;
     private final BlogPostService blogPostService;
+    private final LocalBlogDraftComposer localBlogDraftComposer;
+    private final OpenAiBlogDraftComposer openAiBlogDraftComposer;
     private final ObjectMapper objectMapper;
 
     @Transactional
@@ -185,6 +192,46 @@ public class LocalRepositoryAnalysisService {
         return blogPost;
     }
 
+    @Transactional
+    public BlogPostResponse writeBlogPostFromReport(Long reportId, CreateBlogPostFromAnalysisRequest request) {
+        LocalRepositoryAnalysisReportEntity report = getReportOrThrow(reportId);
+        if (report.getStatus() != GitAnalysisStatus.SUCCESS) {
+            throw new GeneralException(ErrorCode.CONFLICT, "성공한 분석 결과만 블로그 글로 작성할 수 있습니다.");
+        }
+
+        BlogWritingMode writingMode = request.writingMode() == null ? BlogWritingMode.LOCAL_ONLY : request.writingMode();
+        List<String> keywords = mergeSelectedKeywords(request.selectedKeywords(), readStringList(report.getKeywordsJson()));
+        List<com.miso.blog.git.dto.TopicCandidateResponse> topics = readTopicList(report.getTopicCandidatesJson());
+        GeneratedBlogDraft draft = writingMode == BlogWritingMode.OPENAI
+                ? openAiBlogDraftComposer.compose(
+                        report.getLocalRepository().getName(),
+                        report.getAnalysisSummary(),
+                        report.getSourceSummary(),
+                        keywords,
+                        topics,
+                        request
+                )
+                : localBlogDraftComposer.compose(
+                        report.getLocalRepository().getName(),
+                        report.getAnalysisSummary(),
+                        report.getSourceSummary(),
+                        keywords,
+                        topics,
+                        request
+                );
+
+        BlogPostResponse blogPost = blogPostService.createDraftAndMaybeReviewReady(new CreateBlogPostRequest(
+                draft.title(),
+                null,
+                draft.summary(),
+                draft.contentMarkdown(),
+                draft.tags(),
+                "선택 키워드 기반 로컬 분석 글 작성 결과. reportId=" + report.getId()
+        ), Boolean.TRUE.equals(request.markReviewReady()));
+        report.connectBlogPost(blogPost.id());
+        return blogPost;
+    }
+
     private AnalysisPayload analyzeByMode(
             LocalRepositoryEntity repository,
             LocalGitSnapshot snapshot,
@@ -273,6 +320,37 @@ public class LocalRepositoryAnalysisService {
         } catch (JsonProcessingException exception) {
             return List.of();
         }
+    }
+
+    private List<com.miso.blog.git.dto.TopicCandidateResponse> readTopicList(String json) {
+        if (json == null || json.isBlank()) {
+            return List.of();
+        }
+
+        try {
+            return objectMapper.readValue(json, new com.fasterxml.jackson.core.type.TypeReference<>() {
+            });
+        } catch (JsonProcessingException exception) {
+            return List.of();
+        }
+    }
+
+    private List<String> mergeSelectedKeywords(List<String> selectedKeywords, List<String> fallbackKeywords) {
+        java.util.LinkedHashSet<String> values = new java.util.LinkedHashSet<>();
+        if (selectedKeywords != null) {
+            selectedKeywords.stream()
+                    .map(this::trimToNull)
+                    .filter(value -> value != null)
+                    .forEach(values::add);
+        }
+        if (values.isEmpty() && fallbackKeywords != null) {
+            fallbackKeywords.stream()
+                    .map(this::trimToNull)
+                    .filter(value -> value != null)
+                    .limit(6)
+                    .forEach(values::add);
+        }
+        return new java.util.ArrayList<>(values);
     }
 
     private String choose(String primary, String fallback) {

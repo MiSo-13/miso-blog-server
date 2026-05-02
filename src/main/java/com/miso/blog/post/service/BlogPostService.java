@@ -55,6 +55,15 @@ public class BlogPostService {
         return BlogPostResponse.from(blogPost, objectMapper);
     }
 
+    @Transactional
+    public BlogPostResponse createDraftAndMaybeReviewReady(CreateBlogPostRequest request, boolean markReviewReady) {
+        BlogPostResponse created = createDraft(request);
+        if (!markReviewReady) {
+            return created;
+        }
+        return markReviewReady(created.id());
+    }
+
     @Transactional(readOnly = true)
     public List<BlogPostSummaryResponse> getBlogPosts() {
         return blogPostRepository.findAllByOrderByIdDesc()
