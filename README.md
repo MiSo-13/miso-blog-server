@@ -73,6 +73,7 @@ Windows PowerShell에서는 다음 명령을 사용할 수 있습니다.
 - Publish strategy: `GET /api/publish-targets/strategy`
 - Default publish targets: `POST /api/publish-targets/defaults`
 - GitHub Pages publish: `POST /api/blog-posts/{blogPostId}/publish/github-pages`
+- Velog export: `POST /api/blog-posts/{blogPostId}/export/velog`
 
 ## 보안 메모
 

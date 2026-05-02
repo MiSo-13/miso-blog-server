@@ -191,6 +191,7 @@ POST /api/blog-posts/{blogPostId}/review-ready
 POST /api/blog-posts/{blogPostId}/approve
 POST /api/blog-posts/{blogPostId}/publish
 POST /api/blog-posts/{blogPostId}/publish/github-pages
+POST /api/blog-posts/{blogPostId}/export/velog
 ```
 
 상태 흐름:
@@ -234,6 +235,43 @@ POST /api/blog-posts/{blogPostId}/publish/github-pages
 ```
 
 프론트에서는 `APPROVED` 상태의 글에만 GitHub Pages 발행 버튼을 노출하면 됩니다.
+
+### Velog 노출용 export
+
+Velog는 노출 채널로 사용하므로, 서버는 자동 발행 대신 복사/업로드하기 쉬운 Markdown을 내려줍니다. 승인 또는 발행된 글만 export할 수 있습니다.
+
+```http
+POST /api/blog-posts/{blogPostId}/export/velog
+```
+
+```json
+{
+  "targetId": 2,
+  "canonicalUrl": "https://blog.example.com/2026/05/02/spring-openai-cost.html",
+  "includeCanonicalLink": true,
+  "includeSourceNote": true
+}
+```
+
+`targetId`는 선택값입니다. 생략하면 활성화된 `VELOG` 대상이 있으면 응답에 함께 표시하고, 없어도 Markdown export는 가능합니다.
+
+응답 예시:
+
+```json
+{
+  "blogPostId": 10,
+  "targetId": 2,
+  "targetName": "Velog",
+  "title": "Spring Boot에서 OpenAI 비용 조회 API 붙이기",
+  "summary": "OpenAI Admin API로 비용과 사용량을 조회한 구현 기록",
+  "tags": ["Spring Boot", "OpenAI", "운영"],
+  "markdown": "> 원본 글: [Spring Boot에서 OpenAI 비용 조회 API 붙이기](https://blog.example.com/2026/05/02/spring-openai-cost.html)\n\n# ...",
+  "canonicalUrl": "https://blog.example.com/2026/05/02/spring-openai-cost.html",
+  "guide": "Velog 글쓰기 화면에 title, markdown, tags를 복사해 노출용 글로 발행하면 됩니다."
+}
+```
+
+프론트에서는 `title`, `markdown`, `tags` 각각에 복사 버튼을 두면 좋습니다.
 
 ## 발행 대상
 
