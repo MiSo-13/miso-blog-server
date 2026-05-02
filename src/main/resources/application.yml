@@ -24,7 +24,9 @@ blog:
   ai:
     provider: openai
     api-key: ${OPENAI_API_KEY:${openai.api-key:}}
+    admin-key: ${OPENAI_ADMIN_KEY:${openai.admin-key:${openai.api-key:}}}
     model: ${OPENAI_MODEL:${openai.model:gpt-4.1-mini}}
+    budget-limit-usd: ${OPENAI_BUDGET_LIMIT_USD:${openai.budget-limit-usd:}}
   github:
     token: ${GITHUB_TOKEN:${github.token:}}
   publish:
