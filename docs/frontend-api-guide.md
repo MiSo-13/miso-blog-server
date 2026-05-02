@@ -79,7 +79,7 @@ POST /api/local-repositories/{repositoryId}/analyze
 
 응답에는 다음 정보가 포함됩니다.
 
-- `sourceSummary`: 로컬 git 명령으로 만든 분석 근거
+- `sourceSummary`: 로컬 git 명령으로 만든 분석 근거. 서버에서 secret masking 처리 후 저장/응답합니다.
 - `analysisSummary`: 로컬 분석 요약
 - `keywords`: 기술 키워드 후보
 - `topicCandidates`: 블로그 글감 후보
@@ -98,7 +98,19 @@ POST /api/local-repositories/{repositoryId}/analyze
 }
 ```
 
-주의: `OPENAI` 모드는 `sourceSummary`를 OpenAI API로 전송합니다. 프론트에서는 실행 전 전송 동의 UI를 보여주는 것이 좋습니다.
+주의: `OPENAI` 모드는 secret masking 된 `sourceSummary`를 OpenAI API로 전송합니다. 프론트에서는 실행 전 전송 동의 UI를 보여주는 것이 좋습니다.
+
+### Secret masking
+
+분석 근거에는 diff와 설정 파일 일부가 섞일 수 있으므로 서버는 저장 전과 OpenAI 전송 전에 민감값을 자동 치환합니다.
+
+- OpenAI key, GitHub token
+- `Authorization: Bearer ...`
+- `password`, `secret`, `token`, `api-key` 계열 설정값
+- private key block
+- JDBC URL 안의 비밀번호
+
+프론트는 `sourceSummary`를 미리보기로 보여줄 수 있지만, 사용자가 `OPENAI` 모드를 실행하기 전에는 “마스킹된 분석 근거가 외부 AI로 전송된다”는 안내를 유지해주세요.
 
 ### 로컬 분석 결과 조회
 
@@ -210,7 +222,7 @@ GET /api/admin/openai/estimate?model=gpt-4.1-mini&inputTokens=10000&cachedInputT
 ## 프론트 구현 메모
 
 - 기본 분석 버튼은 `LOCAL_ONLY`로 둡니다.
-- `OPENAI` 분석은 “코드 요약이 외부 AI로 전송됩니다” 확인 후 실행하게 만듭니다.
+- `OPENAI` 분석은 “마스킹된 코드 요약이 외부 AI로 전송됩니다” 확인 후 실행하게 만듭니다.
 - 분석 결과 화면은 키워드, 글감 후보 카드, 추천 초안 Markdown 미리보기로 나누면 좋습니다.
 - 사용자가 키워드와 글감 후보를 선택하면 `write-blog-post`를 호출해 실제 블로그 초안을 생성합니다.
 - 글감 후보는 `sourceFiles`를 함께 보여줘야 사용자가 “내가 실제로 구현한 내용”인지 빠르게 확인할 수 있습니다.

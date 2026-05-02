@@ -32,7 +32,9 @@ Miso Blog Server는 사용자의 Git 저장소에서 실제 구현 기록을 읽
 - 로컬 분석 기본값은 외부 전송이 없습니다.
 - `OPENAI` 모드와 GitHub API 분석은 commit message와 patch 요약이 외부 API로 전송될 수 있습니다.
 - 서버 DB에는 분석 근거인 source summary와 분석 결과를 저장합니다.
-- 민감 정보가 코드에 포함될 가능성이 있으면, 추후 secret masking 필터를 추가해야 합니다.
+- source summary는 DB 저장 전과 OpenAI 전송 전에 secret masking 필터를 거칩니다.
+- OpenAI key, GitHub token, Authorization header, password/secret/token 계열 설정값, private key block, JDBC URL 비밀번호는 `[MASKED]`로 치환합니다.
+- 마스킹은 방어 장치이며, `application-private.yml`처럼 민감한 파일은 git에 commit하지 않는 운영 규칙을 유지해야 합니다.
 
 ## 발행 전략
 
@@ -66,10 +68,10 @@ Miso Blog Server는 사용자의 Git 저장소에서 실제 구현 기록을 읽
 - 블로그 글 검수/승인/발행 상태 관리
 - GitHub Pages/Velog 발행 대상 관리
 - OpenAI 비용/사용량 조회
+- 분석 source summary secret masking
 
 ## 향후 작업
 
-- secret masking 필터
 - Ollama 또는 LM Studio 기반 `LOCAL_LLM` 분석 모드
 - GitHub issue, PR, Actions 실패 로그 수집
 - AI 작업 큐와 재시도
