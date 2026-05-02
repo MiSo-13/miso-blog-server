@@ -72,12 +72,14 @@ Windows PowerShell에서는 다음 명령을 사용할 수 있습니다.
 - Blog post detail: `GET /api/blog-posts/{blogPostId}`
 - Publish strategy: `GET /api/publish-targets/strategy`
 - Default publish targets: `POST /api/publish-targets/defaults`
+- GitHub Pages publish: `POST /api/blog-posts/{blogPostId}/publish/github-pages`
 
 ## 보안 메모
 
 - 로컬 Git 분석은 기본적으로 `LOCAL_ONLY` 모드를 사용해 외부 AI 전송 없이 글감과 초안을 만듭니다.
 - 분석 근거인 `sourceSummary`는 DB 저장 전과 OpenAI 전송 전에 secret masking 필터를 거칩니다.
 - `application-private.yml`은 계속 git에 올리지 않고, 실제 키는 로컬 private 설정 또는 환경 변수에서만 관리합니다.
+- GitHub Pages 발행용 GitHub token은 대상 저장소 contents write 권한이 필요합니다.
 
 ## 문서
 

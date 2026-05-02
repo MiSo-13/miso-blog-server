@@ -190,6 +190,7 @@ PATCH /api/blog-posts/{blogPostId}
 POST /api/blog-posts/{blogPostId}/review-ready
 POST /api/blog-posts/{blogPostId}/approve
 POST /api/blog-posts/{blogPostId}/publish
+POST /api/blog-posts/{blogPostId}/publish/github-pages
 ```
 
 상태 흐름:
@@ -197,6 +198,42 @@ POST /api/blog-posts/{blogPostId}/publish
 ```text
 DRAFT -> REVIEW_READY -> APPROVED -> PUBLISHED
 ```
+
+### GitHub Pages 발행
+
+승인된 글은 GitHub Pages 저장소의 `_posts` 경로에 Jekyll Markdown 파일로 commit할 수 있습니다.
+
+```http
+POST /api/blog-posts/{blogPostId}/publish/github-pages
+```
+
+```json
+{
+  "targetId": 1,
+  "commitMessage": "Publish post: Spring Boot OpenAI 비용 조회"
+}
+```
+
+`targetId`를 생략하면 활성화된 `GITHUB_PAGES` 대상 중 `PRIMARY` 역할을 우선 사용합니다.
+
+응답 예시:
+
+```json
+{
+  "blogPostId": 10,
+  "status": "PUBLISHED",
+  "targetId": 1,
+  "repositoryFullName": "user/user.github.io",
+  "branchName": "main",
+  "filePath": "_posts/2026-05-02-spring-openai-cost.md",
+  "commitSha": "abc123",
+  "commitUrl": "https://github.com/user/user.github.io/commit/abc123",
+  "contentUrl": "https://github.com/user/user.github.io/blob/main/_posts/2026-05-02-spring-openai-cost.md",
+  "expectedPublicUrl": "https://blog.example.com/2026/05/02/spring-openai-cost.html"
+}
+```
+
+프론트에서는 `APPROVED` 상태의 글에만 GitHub Pages 발행 버튼을 노출하면 됩니다.
 
 ## 발행 대상
 
@@ -208,6 +245,22 @@ POST /api/publish-targets/defaults
 GET /api/publish-targets
 POST /api/publish-targets
 PATCH /api/publish-targets/{targetId}
+```
+
+GitHub Pages 대상에는 최소한 다음 값이 필요합니다.
+
+```json
+{
+  "channel": "GITHUB_PAGES",
+  "role": "PRIMARY",
+  "name": "GitHub Pages",
+  "baseUrl": "https://blog.example.com",
+  "repositoryFullName": "user/user.github.io",
+  "branchName": "main",
+  "contentRootPath": "_posts",
+  "customDomain": "blog.example.com",
+  "active": true
+}
 ```
 
 ## OpenAI 운영 API

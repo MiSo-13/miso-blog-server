@@ -19,4 +19,5 @@ openai:
   budget-limit-usd:
 
 github:
+  # GitHub Pages 발행까지 사용하려면 contents write 권한이 필요합니다.
   token:

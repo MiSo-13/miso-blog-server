@@ -39,6 +39,8 @@ github:
   token: 개인 GitHub Token
 ```
 
+GitHub Pages 발행을 사용하려면 `github.token`에 발행 저장소 contents write 권한이 필요합니다. classic PAT를 쓰는 경우 `repo` 권한, fine-grained token을 쓰는 경우 대상 저장소의 `Contents: Read and write` 권한을 부여합니다.
+
 ## 환경 변수
 
 운영 환경에서는 private 파일 대신 환경 변수를 우선 사용할 수 있습니다.
@@ -58,7 +60,7 @@ github:
 | `OPENAI_ADMIN_KEY` | OpenAI Admin API Key |
 | `OPENAI_MODEL` | OpenAI 모델 |
 | `OPENAI_BUDGET_LIMIT_USD` | 월 예산 한도 USD |
-| `GITHUB_TOKEN` | GitHub API Token |
+| `GITHUB_TOKEN` | GitHub API Token. GitHub Pages 발행 시 contents write 권한 필요 |
 
 ## 로컬 인프라
 
