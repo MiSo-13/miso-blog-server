@@ -1,0 +1,20 @@
+# 이 파일을 application-private.yml로 복사한 뒤 개인 설정을 입력합니다.
+# application-private.yml은 git에 올라가지 않도록 .gitignore에 등록되어 있습니다.
+
+db:
+  url: jdbc:mysql://localhost:3306/miso_blog?useSSL=false&allowPublicKeyRetrieval=true&useUnicode=true&serverTimezone=Asia/Seoul
+  username: root
+  password: 1234
+
+rabbitmq:
+  host: localhost
+  port: 5672
+  username: guest
+  password: guest
+
+openai:
+  api-key:
+  model: gpt-4.1-mini
+
+github:
+  token:

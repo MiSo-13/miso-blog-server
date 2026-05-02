@@ -1,0 +1,70 @@
+spring:
+  application:
+    name: miso-blog-server
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:local}
+    include: private
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+        format_sql: true
+
+server:
+  port: ${SERVER_PORT:8010}
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui/index.html
+
+blog:
+  ai:
+    provider: openai
+    api-key: ${OPENAI_API_KEY:${openai.api-key:}}
+    model: ${OPENAI_MODEL:${openai.model:gpt-4.1-mini}}
+  github:
+    token: ${GITHUB_TOKEN:${github.token:}}
+  publish:
+    base-url: ${BLOG_PUBLIC_BASE_URL:http://localhost:8010}
+
+---
+spring:
+  config:
+    activate:
+      on-profile: local
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: ${db.url}
+    username: ${db.username}
+    password: ${db.password}
+  rabbitmq:
+    host: ${rabbitmq.host}
+    port: ${rabbitmq.port}
+    username: ${rabbitmq.username}
+    password: ${rabbitmq.password}
+
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: ${DB_URL:${db.url}}
+    username: ${DB_USERNAME:${db.username}}
+    password: ${DB_PASSWORD:${db.password}}
+  rabbitmq:
+    host: ${RABBITMQ_HOST:${rabbitmq.host}}
+    port: ${RABBITMQ_PORT:${rabbitmq.port}}
+    username: ${RABBITMQ_USERNAME:${rabbitmq.username}}
+    password: ${RABBITMQ_PASSWORD:${rabbitmq.password}}
+  jpa:
+    show-sql: false
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: false
