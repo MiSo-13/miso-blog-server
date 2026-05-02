@@ -42,6 +42,7 @@ com.miso.blog
 - `GeneralException`, `ErrorCode` 기반 예외 처리
 - `AiJob`, `AiJobAttempt` 기반 AI 작업 추적
 - RabbitMQ와 Outbox 기반 비동기 처리
+- OpenAI Costs/Usage API 기반 운영 비용 조회
 - `[ADD]`, `[MODIFY]`, `[FIX]` 커밋 메시지 스타일
 
 ## 향후 주요 도메인
@@ -53,3 +54,18 @@ com.miso.blog
 - `BlogPostVersion`: 초안 수정 이력
 - `PublishTarget`: 자체 블로그, GitHub Pages, 외부 블로그 같은 발행 대상
 - `PublishAttempt`: 업로드 시도와 실패 이력
+- `AiUsageLog`: AI 호출별 token 사용량과 예상 비용 이력
+
+## OpenAI 운영 기능
+
+초기 운영 API는 다음 정보를 제공합니다.
+
+- Admin API Key 설정 상태
+- 오늘 사용 금액
+- 이번 달 누적 사용 금액
+- 월 예산 대비 남은 금액
+- 일자별 실제 비용
+- 모델/API key/project 기준 completion token 사용량
+- 예상 input/output token 기반 호출 비용 추정
+
+실제 청구 기준 비용은 OpenAI Costs API를 기준으로 보고, 글 생성 전 예상 비용은 서버 내부 가격표로 계산합니다.

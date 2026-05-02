@@ -19,7 +19,7 @@ spring:
 
 ```yaml
 db:
-  url: jdbc:mysql://localhost:3306/miso_blog?useSSL=false&allowPublicKeyRetrieval=true&useUnicode=true&serverTimezone=Asia/Seoul
+  url: jdbc:mysql://localhost:3306/miso-blog?useSSL=false&allowPublicKeyRetrieval=true&useUnicode=true&serverTimezone=Asia/Seoul
   username: root
   password: 1234
 
@@ -31,7 +31,9 @@ rabbitmq:
 
 openai:
   api-key: 개인 OpenAI API Key
+  admin-key: 조직 비용과 사용량 조회용 OpenAI Admin API Key
   model: gpt-4.1-mini
+  budget-limit-usd: 월 예산 한도. 예: 20
 
 github:
   token: 개인 GitHub Token
@@ -53,7 +55,9 @@ github:
 | `RABBITMQ_USERNAME` | RabbitMQ 계정 |
 | `RABBITMQ_PASSWORD` | RabbitMQ 비밀번호 |
 | `OPENAI_API_KEY` | OpenAI API Key |
+| `OPENAI_ADMIN_KEY` | OpenAI Admin API Key |
 | `OPENAI_MODEL` | OpenAI 모델 |
+| `OPENAI_BUDGET_LIMIT_USD` | 월 예산 한도 USD |
 | `GITHUB_TOKEN` | GitHub API Token |
 
 ## 로컬 인프라
@@ -64,4 +68,17 @@ RabbitMQ는 Docker Compose로 실행합니다.
 docker compose up -d rabbitmq
 ```
 
-MySQL은 로컬 설치 또는 별도 컨테이너를 사용할 수 있습니다. 초기 DB 이름은 `miso_blog`를 기준으로 합니다.
+MySQL은 로컬 설치 또는 별도 컨테이너를 사용할 수 있습니다. 초기 DB 이름은 `miso-blog`를 기준으로 합니다.
+
+```sql
+CREATE DATABASE `miso-blog` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+```
+
+## OpenAI Admin Key
+
+OpenAI 사용량과 실제 비용 조회는 일반 project key가 아니라 Admin API Key가 필요합니다.
+
+- `openai.api-key`: 글 생성 등 일반 OpenAI 호출용입니다.
+- `openai.admin-key`: `/v1/organization/costs`, `/v1/organization/usage/completions` 조회용입니다.
+
+Admin Key가 없으면 `/api/admin/openai/summary`는 조회 불가 사유를 내려주고, costs/usage 상세 API는 `BAD_REQUEST`를 반환합니다.

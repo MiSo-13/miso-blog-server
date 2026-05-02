@@ -24,7 +24,7 @@ Miso Blog Server는 Git 저장소의 코드 변경, 기술 이슈, 장애 해결
 ### 2. MySQL 데이터베이스 생성
 
 ```sql
-CREATE DATABASE miso_blog CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE `miso-blog` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
 
 ### 3. RabbitMQ 실행
@@ -51,6 +51,13 @@ Windows PowerShell에서는 다음 명령을 사용할 수 있습니다.
 - Swagger UI: `http://localhost:8010/swagger-ui/index.html`
 - OpenAPI JSON: `http://localhost:8010/v3/api-docs`
 - RabbitMQ UI: `http://localhost:15672`
+
+## OpenAI 운영 API
+
+- Summary: `GET /api/admin/openai/summary`
+- Costs: `GET /api/admin/openai/costs`
+- Usage: `GET /api/admin/openai/usage/completions`
+- Estimate: `GET /api/admin/openai/estimate`
 
 ## 문서
 
