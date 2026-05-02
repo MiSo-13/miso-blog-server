@@ -7,9 +7,12 @@ import com.miso.blog.post.dto.BlogPostVersionResponse;
 import com.miso.blog.post.dto.CreateBlogPostRequest;
 import com.miso.blog.post.dto.UpdateBlogPostRequest;
 import com.miso.blog.post.service.BlogPostService;
+import com.miso.blog.publish.dto.ExportVelogMarkdownRequest;
+import com.miso.blog.publish.dto.ExportVelogMarkdownResponse;
 import com.miso.blog.publish.dto.PublishGithubPagesRequest;
 import com.miso.blog.publish.dto.PublishGithubPagesResponse;
 import com.miso.blog.publish.service.BlogPostPublishService;
+import com.miso.blog.publish.service.VelogExportService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -31,6 +34,7 @@ import java.util.List;
 public class BlogPostController {
     private final BlogPostService blogPostService;
     private final BlogPostPublishService blogPostPublishService;
+    private final VelogExportService velogExportService;
 
     @PostMapping("/draft/manual")
     @Operation(summary = "수동 블로그 초안 생성", description = "Git/AI 연동 전에도 Markdown 초안을 저장할 수 있습니다.")
@@ -90,5 +94,14 @@ public class BlogPostController {
             @RequestBody(required = false) PublishGithubPagesRequest request
     ) {
         return ApiDataResponse.ok(blogPostPublishService.publishToGitHubPages(blogPostId, request));
+    }
+
+    @PostMapping("/{blogPostId}/export/velog")
+    @Operation(summary = "Velog 노출용 Markdown export", description = "승인 또는 발행된 글을 Velog에 복사하기 좋은 Markdown으로 변환합니다.")
+    public ApiDataResponse<ExportVelogMarkdownResponse> exportVelogMarkdown(
+            @PathVariable Long blogPostId,
+            @RequestBody(required = false) ExportVelogMarkdownRequest request
+    ) {
+        return ApiDataResponse.ok(velogExportService.exportMarkdown(blogPostId, request));
     }
 }
