@@ -61,6 +61,9 @@ Windows PowerShell에서는 다음 명령을 사용할 수 있습니다.
 
 ## 블로그/발행 API
 
+- Git repositories: `POST /api/git-repositories`
+- Git analysis: `POST /api/git-repositories/{repositoryId}/analyze`
+- Git reports: `GET /api/git-repositories/{repositoryId}/analysis-reports`
 - Blog drafts: `POST /api/blog-posts/draft/manual`
 - Blog posts: `GET /api/blog-posts`
 - Blog post detail: `GET /api/blog-posts/{blogPostId}`
