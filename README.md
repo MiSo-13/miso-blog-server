@@ -59,6 +59,14 @@ Windows PowerShell에서는 다음 명령을 사용할 수 있습니다.
 - Usage: `GET /api/admin/openai/usage/completions`
 - Estimate: `GET /api/admin/openai/estimate`
 
+## 블로그/발행 API
+
+- Blog drafts: `POST /api/blog-posts/draft/manual`
+- Blog posts: `GET /api/blog-posts`
+- Blog post detail: `GET /api/blog-posts/{blogPostId}`
+- Publish strategy: `GET /api/publish-targets/strategy`
+- Default publish targets: `POST /api/publish-targets/defaults`
+
 ## 문서
 
 - [프로젝트 설명](docs/project-overview.md)
