@@ -63,6 +63,7 @@ Windows PowerShell에서는 다음 명령을 사용할 수 있습니다.
 
 - Local repositories: `POST /api/local-repositories`
 - Local analysis: `POST /api/local-repositories/{repositoryId}/analyze`
+- Local write: `POST /api/local-repositories/analysis-reports/{reportId}/write-blog-post`
 - Git repositories: `POST /api/git-repositories`
 - Git analysis: `POST /api/git-repositories/{repositoryId}/analyze`
 - Git reports: `GET /api/git-repositories/{repositoryId}/analysis-reports`

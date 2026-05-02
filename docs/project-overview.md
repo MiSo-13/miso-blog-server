@@ -20,9 +20,11 @@ Miso Blog Server는 사용자의 Git 저장소에서 실제 구현 기록을 읽
 2. 서버가 `git log`, `git show`, `git diff`로 최근 구현 기록과 변경 파일을 수집합니다.
 3. 기본 `LOCAL_ONLY` 모드에서는 로컬에서 source summary, 키워드, 글감 후보, Markdown 초안을 만듭니다.
 4. 사용자가 원하면 `OPENAI` 모드로 더 풍부한 초안을 생성합니다.
-5. 분석 결과를 블로그 초안으로 전환합니다.
-6. 승인된 글을 GitHub Pages에 발행합니다.
-7. 필요하면 Velog에 노출용으로 재발행합니다.
+5. 사용자가 키워드와 글감 후보를 선택합니다.
+6. 선택한 키워드와 작성 초점을 바탕으로 좋은 블로그 초안을 생성합니다.
+7. 분석 결과를 블로그 초안으로 전환합니다.
+8. 승인된 글을 GitHub Pages에 발행합니다.
+9. 필요하면 Velog에 노출용으로 재발행합니다.
 
 ## Private Repo 처리 원칙
 
@@ -56,6 +58,7 @@ Miso Blog Server는 사용자의 Git 저장소에서 실제 구현 기록을 읽
 - 로컬 Git 저장소 등록/수정/조회
 - 로컬 Git 커밋/변경사항 기반 LOCAL_ONLY 분석
 - 선택적 OpenAI 분석
+- 선택 키워드/글감 후보 기반 블로그 초안 작성
 - GitHub 저장소 등록/수정/조회
 - GitHub 최근 commit 기반 OpenAI 분석
 - 키워드/글감 후보/Markdown 초안 저장

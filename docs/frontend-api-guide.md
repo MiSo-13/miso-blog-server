@@ -106,7 +106,32 @@ POST /api/local-repositories/{repositoryId}/analyze
 GET /api/local-repositories/{repositoryId}/analysis-reports
 GET /api/local-repositories/analysis-reports/{reportId}
 POST /api/local-repositories/analysis-reports/{reportId}/blog-post
+POST /api/local-repositories/analysis-reports/{reportId}/write-blog-post
 ```
+
+### 선택 키워드 기반 글 작성
+
+분석 결과의 `keywords`와 `topicCandidates` 중 사용자가 원하는 것을 고른 뒤 더 정돈된 블로그 초안을 생성합니다.
+
+```http
+POST /api/local-repositories/analysis-reports/{reportId}/write-blog-post
+```
+
+```json
+{
+  "selectedKeywords": ["Spring Boot", "Git", "Markdown"],
+  "selectedTopicTitle": "최근 구현 흐름을 코드 변경으로 되짚기",
+  "writingFocus": "실제 구현 흐름을 독자가 따라갈 수 있게 정리",
+  "audience": "개인 프로젝트를 운영 가능한 서비스로 키우는 개발자",
+  "writingMode": "LOCAL_ONLY",
+  "markReviewReady": true
+}
+```
+
+`writingMode`:
+
+- `LOCAL_ONLY`: 외부 전송 없이 로컬 분석 결과만으로 초안을 재구성합니다.
+- `OPENAI`: source summary를 OpenAI로 보내 더 풍부한 글을 생성합니다.
 
 ## GitHub 저장소 분석
 
@@ -121,6 +146,7 @@ POST /api/git-repositories/{repositoryId}/analyze
 GET /api/git-repositories/{repositoryId}/analysis-reports
 GET /api/git-repositories/analysis-reports/{reportId}
 POST /api/git-repositories/analysis-reports/{reportId}/blog-post
+POST /api/git-repositories/analysis-reports/{reportId}/write-blog-post
 ```
 
 ## 블로그 글
@@ -186,5 +212,6 @@ GET /api/admin/openai/estimate?model=gpt-4.1-mini&inputTokens=10000&cachedInputT
 - 기본 분석 버튼은 `LOCAL_ONLY`로 둡니다.
 - `OPENAI` 분석은 “코드 요약이 외부 AI로 전송됩니다” 확인 후 실행하게 만듭니다.
 - 분석 결과 화면은 키워드, 글감 후보 카드, 추천 초안 Markdown 미리보기로 나누면 좋습니다.
+- 사용자가 키워드와 글감 후보를 선택하면 `write-blog-post`를 호출해 실제 블로그 초안을 생성합니다.
 - 글감 후보는 `sourceFiles`를 함께 보여줘야 사용자가 “내가 실제로 구현한 내용”인지 빠르게 확인할 수 있습니다.
 - 발행 설정 화면은 GitHub Pages 카드와 Velog 카드로 나누고, GitHub Pages를 기본 발행 대상으로 강조하면 됩니다.
