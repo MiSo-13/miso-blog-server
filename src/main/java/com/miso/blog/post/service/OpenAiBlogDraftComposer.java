@@ -10,6 +10,7 @@ import com.miso.blog.ai.entity.AiUsageLogEntity;
 import com.miso.blog.ai.repository.AiUsageLogRepository;
 import com.miso.blog.common.code.ErrorCode;
 import com.miso.blog.common.exception.GeneralException;
+import com.miso.blog.common.security.SecretMaskingService;
 import com.miso.blog.git.dto.TopicCandidateResponse;
 import com.miso.blog.post.dto.CreateBlogPostFromAnalysisRequest;
 import com.miso.blog.post.dto.GeneratedBlogDraft;
@@ -36,6 +37,7 @@ public class OpenAiBlogDraftComposer {
     private final ObjectMapper objectMapper;
     private final AiUsageLogRepository aiUsageLogRepository;
     private final OpenAiCostEstimator openAiCostEstimator;
+    private final SecretMaskingService secretMaskingService;
     private final HttpClient httpClient = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(10))
             .build();
@@ -56,6 +58,7 @@ public class OpenAiBlogDraftComposer {
     ) {
         validateApiKey();
         LocalDateTime startedAt = LocalDateTime.now();
+        String maskedSourceSummary = secretMaskingService.mask(sourceSummary);
 
         try {
             Map<String, Object> requestBody = Map.of(
@@ -79,7 +82,7 @@ public class OpenAiBlogDraftComposer {
                                     "role",
                                     "user",
                                     "content",
-                                    buildPrompt(repositoryName, analysisSummary, sourceSummary, keywords, topicCandidates, request)
+                                    buildPrompt(repositoryName, analysisSummary, maskedSourceSummary, keywords, topicCandidates, request)
                             )
                     )
             );

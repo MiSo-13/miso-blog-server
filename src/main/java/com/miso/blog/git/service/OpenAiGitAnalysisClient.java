@@ -10,6 +10,7 @@ import com.miso.blog.ai.entity.AiUsageLogEntity;
 import com.miso.blog.ai.repository.AiUsageLogRepository;
 import com.miso.blog.common.code.ErrorCode;
 import com.miso.blog.common.exception.GeneralException;
+import com.miso.blog.common.security.SecretMaskingService;
 import com.miso.blog.git.dto.OpenAiGitAnalysisResult;
 import com.miso.blog.git.dto.TopicCandidateResponse;
 import lombok.RequiredArgsConstructor;
@@ -36,6 +37,7 @@ public class OpenAiGitAnalysisClient {
     private final ObjectMapper objectMapper;
     private final AiUsageLogRepository aiUsageLogRepository;
     private final OpenAiCostEstimator openAiCostEstimator;
+    private final SecretMaskingService secretMaskingService;
     private final HttpClient httpClient = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(10))
             .build();
@@ -49,6 +51,7 @@ public class OpenAiGitAnalysisClient {
     public OpenAiGitAnalysisResult analyze(String repositoryFullName, String branch, String focus, String sourceSummary) {
         validateApiKey();
         LocalDateTime startedAt = LocalDateTime.now();
+        String maskedSourceSummary = secretMaskingService.mask(sourceSummary);
 
         try {
             Map<String, Object> requestBody = new HashMap<>();
@@ -74,7 +77,7 @@ public class OpenAiGitAnalysisClient {
                             "role",
                             "user",
                             "content",
-                            buildPrompt(repositoryFullName, branch, focus, sourceSummary)
+                            buildPrompt(repositoryFullName, branch, focus, maskedSourceSummary)
                     )
             ));
 

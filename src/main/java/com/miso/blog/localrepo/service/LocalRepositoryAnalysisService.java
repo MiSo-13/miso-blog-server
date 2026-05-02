@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.miso.blog.common.code.ErrorCode;
 import com.miso.blog.common.exception.GeneralException;
+import com.miso.blog.common.security.SecretMaskingService;
 import com.miso.blog.git.code.GitAnalysisStatus;
 import com.miso.blog.git.dto.OpenAiGitAnalysisResult;
 import com.miso.blog.git.service.OpenAiGitAnalysisClient;
@@ -46,6 +47,7 @@ public class LocalRepositoryAnalysisService {
     private final BlogPostService blogPostService;
     private final LocalBlogDraftComposer localBlogDraftComposer;
     private final OpenAiBlogDraftComposer openAiBlogDraftComposer;
+    private final SecretMaskingService secretMaskingService;
     private final ObjectMapper objectMapper;
 
     @Transactional
@@ -113,9 +115,10 @@ public class LocalRepositoryAnalysisService {
 
         try {
             LocalGitSnapshot snapshot = localGitRepositoryScanner.scan(repository, commitLimit, includeUncommitted);
-            sourceSummary = snapshot.sourceSummary();
+            sourceSummary = secretMaskingService.mask(snapshot.sourceSummary());
+            LocalGitSnapshot maskedSnapshot = new LocalGitSnapshot(snapshot.branchName(), sourceSummary);
 
-            AnalysisPayload payload = analyzeByMode(repository, snapshot, mode, focus);
+            AnalysisPayload payload = analyzeByMode(repository, maskedSnapshot, mode, focus);
             Long blogPostId = null;
             if (Boolean.TRUE.equals(request.createBlogPost())) {
                 BlogPostResponse blogPost = blogPostService.createDraft(new CreateBlogPostRequest(
