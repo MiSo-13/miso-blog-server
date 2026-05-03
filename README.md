@@ -46,6 +46,17 @@ Windows PowerShell에서는 다음 명령을 사용할 수 있습니다.
 .\gradlew.bat bootRun
 ```
 
+### 5. Docker 배포
+
+MAGI 서버와 포트가 겹치지 않도록 배포 기본값은 서버 `8010`, RabbitMQ `5673`, RabbitMQ UI `15673`을 사용합니다.
+
+```powershell
+Copy-Item deploy.env.example .env.deploy
+docker compose --env-file .env.deploy -f docker-compose.deploy.yml up -d --build
+```
+
+자세한 내용은 [배포 가이드](docs/deployment-guide.md)를 참고합니다.
+
 ## 주요 접속 경로
 
 - Health Check: `http://localhost:8010/api/system/health`
@@ -106,4 +117,5 @@ Windows PowerShell에서는 다음 명령을 사용할 수 있습니다.
 
 - [프로젝트 설명](docs/project-overview.md)
 - [설정 가이드](docs/configuration-guide.md)
+- [배포 가이드](docs/deployment-guide.md)
 - [프론트 연동 가이드](docs/frontend-api-guide.md)
