@@ -62,6 +62,10 @@ Windows PowerShell에서는 다음 명령을 사용할 수 있습니다.
 
 ## 블로그/발행 API
 
+- AI jobs: `GET /api/ai-jobs`
+- AI job detail: `GET /api/ai-jobs/{jobId}`
+- Async general AI blog draft: `POST /api/ai-jobs/blog-posts/draft/ai-general`
+- Async AI blog revision: `POST /api/ai-jobs/blog-posts/{blogPostId}/revise/ai`
 - Local repositories: `POST /api/local-repositories`
 - Local analysis: `POST /api/local-repositories/{repositoryId}/analyze`
 - Local write: `POST /api/local-repositories/analysis-reports/{reportId}/write-blog-post`

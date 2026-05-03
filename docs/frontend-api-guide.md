@@ -33,6 +33,67 @@
 GET /api/system/health
 ```
 
+## AI 비동기 작업
+
+AI 글 생성/수정처럼 시간이 걸릴 수 있는 작업은 비동기 job API를 우선 사용합니다. 요청 즉시 `jobId`를 받고, 프론트는 상태를 polling해서 완료 결과를 표시합니다.
+
+상태:
+
+```text
+PENDING -> RUNNING -> SUCCEEDED
+                  -> FAILED
+```
+
+### 일반 블로그 생성 job
+
+```http
+POST /api/ai-jobs/blog-posts/draft/ai-general
+```
+
+요청 body는 `POST /api/blog-posts/draft/ai-general`과 같습니다.
+
+### AI 추가 수정 job
+
+```http
+POST /api/ai-jobs/blog-posts/{blogPostId}/revise/ai
+```
+
+요청 body는 `POST /api/blog-posts/{blogPostId}/revise/ai`와 같습니다.
+
+### 작업 상태 조회
+
+```http
+GET /api/ai-jobs/{jobId}
+GET /api/ai-jobs
+```
+
+응답 예시:
+
+```json
+{
+  "id": 1,
+  "type": "GENERAL_BLOG_DRAFT",
+  "status": "SUCCEEDED",
+  "resultBlogPostId": 10,
+  "resultJson": "{\"id\":10,\"title\":\"성수동 파스타 맛집 후기\"}",
+  "errorMessage": null,
+  "startedAt": "2026-05-03T11:30:00",
+  "finishedAt": "2026-05-03T11:30:20",
+  "createdAt": "2026-05-03T11:29:59",
+  "updatedAt": "2026-05-03T11:30:20"
+}
+```
+
+프론트 권장 흐름:
+
+1. job 생성 API 호출
+2. `PENDING`/`RUNNING` 동안 로딩 상태 표시
+3. 1~3초 간격으로 `GET /api/ai-jobs/{jobId}` polling
+4. `SUCCEEDED`이면 `resultBlogPostId`로 `GET /api/blog-posts/{blogPostId}` 호출
+5. `FAILED`이면 `errorMessage`를 보여주고 재시도 버튼 제공
+
+기존 동기 API도 유지하지만, 프론트에서는 비동기 job API를 기본으로 쓰는 것을 권장합니다.
+
 ## 로컬 Git 저장소 분석
 
 기본 추천 흐름입니다. 로컬에 clone된 repo를 서버가 직접 `git log`, `git show`, `git diff`로 읽고, 기본값인 `LOCAL_ONLY` 모드에서는 외부 AI로 코드를 전송하지 않습니다.

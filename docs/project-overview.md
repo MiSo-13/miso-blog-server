@@ -68,6 +68,7 @@ Miso Blog Server는 사용자의 Git 저장소에서 실제 구현 기록을 읽
 - `BlogMediaAsset`: 일반 블로그 작성에 사용할 업로드 이미지 메타데이터
 - `PublishTarget`: GitHub Pages, Velog 같은 발행 대상
 - `AiUsageLog`: AI 호출별 token 사용량과 예상 비용 이력
+- `AiJob`: 오래 걸리는 AI 글 작성/수정 작업의 상태와 결과
 
 ## 현재 API 범위
 
@@ -82,6 +83,7 @@ Miso Blog Server는 사용자의 Git 저장소에서 실제 구현 기록을 읽
 - 맛집/카페/여행 등 일반 블로그 AI 초안 작성
 - 블로그 이미지 업로드/조회와 정적 서빙
 - AI 추가 요청 기반 블로그 초안 재작성
+- 일반 블로그 작성과 AI 추가 수정 비동기 job 실행/상태 조회
 - 블로그 글 검수/승인/발행 상태 관리
 - GitHub Pages/Velog 발행 대상 관리
 - GitHub Pages Markdown commit 발행
@@ -93,5 +95,6 @@ Miso Blog Server는 사용자의 Git 저장소에서 실제 구현 기록을 읽
 
 - Ollama 또는 LM Studio 기반 `LOCAL_LLM` 분석 모드
 - GitHub issue, PR, Actions 실패 로그 수집
-- AI 작업 큐와 재시도
+- Git 분석/발행 작업까지 비동기 job 확장
+- 실패 job 재시도
 - Velog 발행 자동화 가능성 검토
