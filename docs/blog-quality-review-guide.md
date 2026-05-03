@@ -61,5 +61,47 @@ POST /api/blog-posts/{blogPostId}/quality-review/ai
 
 - 일반 맛집 글: 자연스러움 85점, 근거 충실도 70점, 발행 가능 여부 `false`
 - 개발 글: 자연스러움 55점, 근거 충실도 40점, 발행 가능 여부 `false`
+- 품질 자동 개선 job: 임시 예약 링크와 가짜 전화번호는 제거했지만, 예약 필요성처럼 근거가 부족한 문장이 남아 `criteriaPassed=false`로 차단
 
 현재 생성 결과는 초안으로는 쓸 수 있지만, 사람 검토 없이 바로 업로드할 수준은 아닙니다. 그래서 프론트에서는 품질 리뷰 결과를 사용자가 확인하고, 추가 수정 요청을 거쳐 발행하도록 설계하는 것이 안전합니다.
+
+## 품질 자동 개선 API
+
+품질 리뷰 결과의 `revisionInstruction`을 사람이 복사하지 않아도 되도록, 서버가 리뷰와 재작성을 반복하는 API입니다. 실제 OpenAI 호출이 여러 번 이어질 수 있으므로 프론트에서는 비동기 job API를 기본으로 사용하세요.
+
+```http
+POST /api/ai-jobs/blog-posts/{blogPostId}/quality-improve/ai
+```
+
+동기 호출이 필요한 내부 도구에서는 아래 API도 사용할 수 있습니다.
+
+```http
+POST /api/blog-posts/{blogPostId}/quality-improve/ai
+```
+
+요청 예시:
+
+```json
+{
+  "reviewRequest": {
+    "originalInputMemo": "주말 저녁 방문. 내부는 조용했고 따뜻한 조명이라 데이트하기 좋았음.",
+    "targetReader": "성수동 데이트 맛집을 찾는 20~30대 독자",
+    "monetizationGoal": "검색 유입과 장기 애드센스 수익화"
+  },
+  "maxRevisionRounds": 2,
+  "minimumHumanNaturalnessScore": 85,
+  "minimumFactualGroundingScore": 85,
+  "minimumReadabilityScore": 80,
+  "minimumSeoReadinessScore": 70,
+  "minimumMonetizationReadinessScore": 55,
+  "additionalRevisionMemo": "가격, 메뉴, 예약 여부는 사용자가 제공한 내용 안에서만 다뤄줘.",
+  "tone": "사람이 직접 다듬은 듯한 담백한 후기체",
+  "targetLength": "LONG",
+  "preserveTitle": false,
+  "preserveTags": true,
+  "requirePublishReady": false,
+  "markReviewReadyWhenPassed": true
+}
+```
+
+응답은 최초 리뷰, 최종 리뷰, 최종 글, 실제 사용한 수정 지시문 목록을 함께 반환합니다. `criteriaPassed=true`이면 지정한 점수 기준을 통과했고, 근거 없는 주장이나 placeholder 링크/전화번호 같은 하드 블로커가 없다는 뜻입니다. `publishReady=true`이면 AI 리뷰어가 사람 검토 없이 발행해도 된다고 판단한 상태입니다.

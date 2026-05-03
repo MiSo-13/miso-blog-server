@@ -60,6 +60,14 @@ POST /api/ai-jobs/blog-posts/{blogPostId}/revise/ai
 
 요청 body는 `POST /api/blog-posts/{blogPostId}/revise/ai`와 같습니다.
 
+### AI 품질 자동 개선 job
+
+```http
+POST /api/ai-jobs/blog-posts/{blogPostId}/quality-improve/ai
+```
+
+요청 body는 `POST /api/blog-posts/{blogPostId}/quality-improve/ai`와 같습니다. 리뷰, 재작성, 재리뷰가 이어질 수 있으므로 프론트에서는 이 비동기 API를 기본으로 사용하는 것을 권장합니다.
+
 ### 작업 상태 조회
 
 ```http
@@ -348,6 +356,7 @@ GET /api/blog-posts/{blogPostId}/versions
 PATCH /api/blog-posts/{blogPostId}
 POST /api/blog-posts/{blogPostId}/revise/ai
 POST /api/blog-posts/{blogPostId}/quality-review/ai
+POST /api/blog-posts/{blogPostId}/quality-improve/ai
 POST /api/blog-posts/{blogPostId}/review-ready
 POST /api/blog-posts/{blogPostId}/approve
 POST /api/blog-posts/{blogPostId}/publish

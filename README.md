@@ -66,6 +66,7 @@ Windows PowerShell에서는 다음 명령을 사용할 수 있습니다.
 - AI job detail: `GET /api/ai-jobs/{jobId}`
 - Async general AI blog draft: `POST /api/ai-jobs/blog-posts/draft/ai-general`
 - Async AI blog revision: `POST /api/ai-jobs/blog-posts/{blogPostId}/revise/ai`
+- Async AI blog quality improve: `POST /api/ai-jobs/blog-posts/{blogPostId}/quality-improve/ai`
 - Local repositories: `POST /api/local-repositories`
 - Local analysis: `POST /api/local-repositories/{repositoryId}/analyze`
 - Local write: `POST /api/local-repositories/analysis-reports/{reportId}/write-blog-post`
@@ -77,6 +78,7 @@ Windows PowerShell에서는 다음 명령을 사용할 수 있습니다.
 - General AI blog draft: `POST /api/blog-posts/draft/ai-general`
 - AI blog revision: `POST /api/blog-posts/{blogPostId}/revise/ai`
 - AI blog quality review: `POST /api/blog-posts/{blogPostId}/quality-review/ai`
+- AI blog quality improve: `POST /api/blog-posts/{blogPostId}/quality-improve/ai`
 - Blog posts: `GET /api/blog-posts`
 - Blog post detail: `GET /api/blog-posts/{blogPostId}`
 - Publish strategy: `GET /api/publish-targets/strategy`
