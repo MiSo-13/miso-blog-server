@@ -347,6 +347,7 @@ GET /api/blog-posts/{blogPostId}
 GET /api/blog-posts/{blogPostId}/versions
 PATCH /api/blog-posts/{blogPostId}
 POST /api/blog-posts/{blogPostId}/revise/ai
+POST /api/blog-posts/{blogPostId}/quality-review/ai
 POST /api/blog-posts/{blogPostId}/review-ready
 POST /api/blog-posts/{blogPostId}/approve
 POST /api/blog-posts/{blogPostId}/publish

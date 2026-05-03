@@ -76,6 +76,7 @@ Windows PowerShell에서는 다음 명령을 사용할 수 있습니다.
 - Blog drafts: `POST /api/blog-posts/draft/manual`
 - General AI blog draft: `POST /api/blog-posts/draft/ai-general`
 - AI blog revision: `POST /api/blog-posts/{blogPostId}/revise/ai`
+- AI blog quality review: `POST /api/blog-posts/{blogPostId}/quality-review/ai`
 - Blog posts: `GET /api/blog-posts`
 - Blog post detail: `GET /api/blog-posts/{blogPostId}`
 - Publish strategy: `GET /api/publish-targets/strategy`
