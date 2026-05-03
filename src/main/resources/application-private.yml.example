@@ -21,3 +21,12 @@ openai:
 github:
   # GitHub Pages 발행까지 사용하려면 contents write 권한이 필요합니다.
   token:
+  # repositoryFullName을 DB에 넣지 않아도 아래 값으로 GitHub Pages 대상을 추론할 수 있습니다.
+  # owner만 입력하면 owner/owner.github.io 저장소를 기본값으로 사용합니다.
+  owner:
+  pages-repository-name:
+  pages-repository-full-name:
+  pages-branch: main
+  pages-content-root-path: _posts
+  pages-base-url:
+  pages-custom-domain:

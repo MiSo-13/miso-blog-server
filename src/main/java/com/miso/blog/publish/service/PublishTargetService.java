@@ -23,6 +23,7 @@ import java.util.List;
 public class PublishTargetService {
     private final PublishTargetRepository publishTargetRepository;
     private final GitHubContentsClient gitHubContentsClient;
+    private final GitHubPagesTargetDefaults gitHubPagesTargetDefaults;
 
     @Transactional
     public PublishTargetResponse createTarget(CreatePublishTargetRequest request) {
@@ -53,7 +54,7 @@ public class PublishTargetService {
         return new PublishStrategyResponse(
                 PublishChannel.GITHUB_PAGES.name(),
                 PublishChannel.VELOG.name(),
-                "서버 DB의 Markdown을 원본으로 저장하고, GitHub Pages에는 Markdown 파일 commit, Velog에는 노출용 재발행을 목표로 합니다.",
+                "서버 DB의 Markdown을 원본으로 저장하고 GitHub Pages에는 Markdown 파일 commit, Velog에는 노출용 export를 제공합니다.",
                 getTargets()
         );
     }
@@ -66,17 +67,20 @@ public class PublishTargetService {
         }
         validateGitHubPagesTarget(target);
 
+        String repositoryFullName = gitHubPagesTargetDefaults.repositoryFullName(target);
+        String branchName = gitHubPagesTargetDefaults.branchName(target);
+        String contentRootPath = gitHubPagesTargetDefaults.contentRootPath(target);
         GitHubContentsClient.GitHubConnectionCheckResult result = gitHubContentsClient.checkConnection(
-                target.getRepositoryFullName(),
-                target.getBranchName(),
-                target.getContentRootPath()
+                repositoryFullName,
+                branchName,
+                contentRootPath
         );
 
         return new GitHubPagesConnectionTestResponse(
                 target.getId(),
-                target.getRepositoryFullName(),
-                target.getBranchName(),
-                target.getContentRootPath(),
+                repositoryFullName,
+                branchName,
+                contentRootPath,
                 true,
                 result.checkedItems(),
                 result.warnings(),
@@ -96,13 +100,21 @@ public class PublishTargetService {
             return getTargets();
         }
 
-        // 초기 전략: GitHub Pages를 원본 발행 채널로, Velog를 노출 채널로 둡니다.
+        PublishTargetEntity emptyGitHubPagesTarget = PublishTargetEntity.builder()
+                .channel(PublishChannel.GITHUB_PAGES)
+                .role(PublishRole.PRIMARY)
+                .name("GitHub Pages")
+                .active(true)
+                .build();
         publishTargetRepository.save(PublishTargetEntity.builder()
                 .channel(PublishChannel.GITHUB_PAGES)
                 .role(PublishRole.PRIMARY)
                 .name("GitHub Pages")
-                .branchName("main")
-                .contentRootPath("_posts")
+                .baseUrl(gitHubPagesTargetDefaults.baseUrl(emptyGitHubPagesTarget))
+                .repositoryFullName(gitHubPagesTargetDefaults.repositoryFullName(emptyGitHubPagesTarget))
+                .branchName(gitHubPagesTargetDefaults.branchName(emptyGitHubPagesTarget))
+                .contentRootPath(gitHubPagesTargetDefaults.contentRootPath(emptyGitHubPagesTarget))
+                .customDomain(gitHubPagesTargetDefaults.customDomain(emptyGitHubPagesTarget))
                 .active(true)
                 .build());
         publishTargetRepository.save(PublishTargetEntity.builder()
@@ -140,10 +152,10 @@ public class PublishTargetService {
         if (!target.isActive()) {
             throw new GeneralException(ErrorCode.CONFLICT, "비활성화된 발행 대상입니다.");
         }
-        if (target.getRepositoryFullName() == null || target.getRepositoryFullName().isBlank()) {
-            throw new GeneralException(ErrorCode.BAD_REQUEST, "GitHub Pages repositoryFullName을 먼저 설정하세요.");
+        if (gitHubPagesTargetDefaults.repositoryFullName(target) == null) {
+            throw new GeneralException(ErrorCode.BAD_REQUEST, "GitHub Pages repositoryFullName 또는 github.owner를 먼저 설정하세요.");
         }
-        if (target.getBranchName() == null || target.getBranchName().isBlank()) {
+        if (gitHubPagesTargetDefaults.branchName(target) == null) {
             throw new GeneralException(ErrorCode.BAD_REQUEST, "GitHub Pages branchName을 먼저 설정하세요.");
         }
     }

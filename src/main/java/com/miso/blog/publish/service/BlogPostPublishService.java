@@ -32,6 +32,7 @@ public class BlogPostPublishService {
     private final BlogPostService blogPostService;
     private final GitHubPagesPostFormatter gitHubPagesPostFormatter;
     private final GitHubContentsClient gitHubContentsClient;
+    private final GitHubPagesTargetDefaults gitHubPagesTargetDefaults;
     private final ObjectMapper objectMapper;
 
     @Transactional
@@ -44,16 +45,19 @@ public class BlogPostPublishService {
         PublishTargetEntity target = resolveGitHubPagesTarget(request == null ? null : request.targetId());
         validateTarget(target);
 
+        String repositoryFullName = gitHubPagesTargetDefaults.repositoryFullName(target);
+        String branchName = gitHubPagesTargetDefaults.branchName(target);
+        String contentRootPath = gitHubPagesTargetDefaults.contentRootPath(target);
         LocalDateTime publishedAt = LocalDateTime.now();
         List<String> tags = readTags(blogPost.getTagsJson());
-        String filePath = gitHubPagesPostFormatter.buildFilePath(target.getContentRootPath(), blogPost, publishedAt);
+        String filePath = gitHubPagesPostFormatter.buildFilePath(contentRootPath, blogPost, publishedAt);
         String markdown = gitHubPagesPostFormatter.buildMarkdown(blogPost, tags, publishedAt);
         String commitMessage = resolveCommitMessage(request, blogPost);
 
         // GitHub commit이 성공한 뒤에만 내부 발행 상태를 전환한다.
         GitHubContentCommitResult commitResult = gitHubContentsClient.putFile(
-                target.getRepositoryFullName(),
-                target.getBranchName(),
+                repositoryFullName,
+                branchName,
                 filePath,
                 markdown,
                 commitMessage
@@ -64,13 +68,13 @@ public class BlogPostPublishService {
                 blogPost.getId(),
                 BlogPostStatus.PUBLISHED.name(),
                 target.getId(),
-                target.getRepositoryFullName(),
-                target.getBranchName(),
+                repositoryFullName,
+                branchName,
                 commitResult.filePath(),
                 commitResult.commitSha(),
                 commitResult.commitUrl(),
                 commitResult.contentUrl(),
-                gitHubPagesPostFormatter.buildExpectedPublicUrl(resolveBaseUrl(target), blogPost, publishedAt)
+                gitHubPagesPostFormatter.buildExpectedPublicUrl(gitHubPagesTargetDefaults.resolvedPublicBaseUrl(target), blogPost, publishedAt)
         );
     }
 
@@ -101,11 +105,11 @@ public class BlogPostPublishService {
         if (!target.isActive()) {
             throw new GeneralException(ErrorCode.CONFLICT, "비활성화된 발행 대상입니다.");
         }
-        if (target.getRepositoryFullName() == null || target.getRepositoryFullName().isBlank()) {
-            throw new GeneralException(ErrorCode.BAD_REQUEST, "GitHub Pages 발행 대상의 repositoryFullName을 설정해야 합니다.");
+        if (gitHubPagesTargetDefaults.repositoryFullName(target) == null) {
+            throw new GeneralException(ErrorCode.BAD_REQUEST, "GitHub Pages repositoryFullName 또는 github.owner를 먼저 설정하세요.");
         }
-        if (target.getBranchName() == null || target.getBranchName().isBlank()) {
-            throw new GeneralException(ErrorCode.BAD_REQUEST, "GitHub Pages 발행 대상의 branchName을 설정해야 합니다.");
+        if (gitHubPagesTargetDefaults.branchName(target) == null) {
+            throw new GeneralException(ErrorCode.BAD_REQUEST, "GitHub Pages branchName을 먼저 설정하세요.");
         }
     }
 
@@ -114,15 +118,6 @@ public class BlogPostPublishService {
             return request.commitMessage().trim();
         }
         return "Publish blog post: " + blogPost.getTitle();
-    }
-
-    private String resolveBaseUrl(PublishTargetEntity target) {
-        if (target.getCustomDomain() != null && !target.getCustomDomain().isBlank()) {
-            return target.getCustomDomain().startsWith("http")
-                    ? target.getCustomDomain()
-                    : "https://" + target.getCustomDomain();
-        }
-        return target.getBaseUrl();
     }
 
     private List<String> readTags(String tagsJson) {

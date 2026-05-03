@@ -33,6 +33,13 @@ blog:
     budget-limit-usd: ${OPENAI_BUDGET_LIMIT_USD:${openai.budget-limit-usd:}}
   github:
     token: ${GITHUB_TOKEN:${github.token:}}
+    owner: ${GITHUB_OWNER:${github.owner:}}
+    pages-repository-name: ${GITHUB_PAGES_REPOSITORY_NAME:${github.pages-repository-name:}}
+    pages-repository-full-name: ${GITHUB_PAGES_REPOSITORY_FULL_NAME:${github.pages-repository-full-name:}}
+    pages-branch: ${GITHUB_PAGES_BRANCH:${github.pages-branch:main}}
+    pages-content-root-path: ${GITHUB_PAGES_CONTENT_ROOT_PATH:${github.pages-content-root-path:_posts}}
+    pages-base-url: ${GITHUB_PAGES_BASE_URL:${github.pages-base-url:}}
+    pages-custom-domain: ${GITHUB_PAGES_CUSTOM_DOMAIN:${github.pages-custom-domain:}}
   publish:
     base-url: ${BLOG_PUBLIC_BASE_URL:http://localhost:8010}
   media:
