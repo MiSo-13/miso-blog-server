@@ -20,6 +20,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 
 @Component
@@ -49,6 +50,49 @@ public class GitHubRepositoryClient {
             snapshots.add(fetchCommitDetail(repositoryFullName, sha));
         }
         return snapshots;
+    }
+
+    public String fetchFileContent(String repositoryFullName, String branch, String filePath, int maxLength) {
+        validateToken();
+        try {
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(GITHUB_API_BASE_URL
+                            + "/repos/" + repositoryFullName
+                            + "/contents/" + encodePath(filePath)
+                            + "?ref=" + urlEncode(branch)))
+                    .timeout(Duration.ofSeconds(30))
+                    .header("Accept", "application/vnd.github+json")
+                    .header("Authorization", "Bearer " + githubToken)
+                    .header("X-GitHub-Api-Version", "2022-11-28")
+                    .GET()
+                    .build();
+
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() == 404) {
+                return null;
+            }
+            if (response.statusCode() >= 400) {
+                return null;
+            }
+
+            JsonNode root = objectMapper.readTree(response.body());
+            if (!"file".equals(root.path("type").asText()) || root.path("encoding").asText().isBlank()) {
+                return null;
+            }
+            String encodedContent = root.path("content").asText("").replaceAll("\\s", "");
+            if (encodedContent.isBlank()) {
+                return null;
+            }
+            String content = new String(Base64.getDecoder().decode(encodedContent), StandardCharsets.UTF_8);
+            return limit(content, maxLength);
+        } catch (IllegalArgumentException exception) {
+            return null;
+        } catch (IOException exception) {
+            return null;
+        } catch (InterruptedException exception) {
+            Thread.currentThread().interrupt();
+            return null;
+        }
     }
 
     private List<JsonNode> fetchCommitSummaries(String repositoryFullName, String branch, int limit) {
@@ -147,6 +191,13 @@ public class GitHubRepositoryClient {
         return patch.substring(0, PATCH_LIMIT_PER_FILE) + "\n... patch truncated ...";
     }
 
+    private String limit(String value, int maxLength) {
+        if (value == null || value.length() <= maxLength) {
+            return value;
+        }
+        return value.substring(0, maxLength) + "\n... file content truncated ...";
+    }
+
     private String textOrNull(JsonNode node, String fieldName) {
         String value = node.path(fieldName).asText(null);
         return value == null || value.isBlank() ? null : value;
@@ -154,5 +205,14 @@ public class GitHubRepositoryClient {
 
     private String urlEncode(String value) {
         return URLEncoder.encode(value, StandardCharsets.UTF_8);
+    }
+
+    private String encodePath(String filePath) {
+        String[] segments = filePath.split("/");
+        List<String> encodedSegments = new ArrayList<>();
+        for (String segment : segments) {
+            encodedSegments.add(urlEncode(segment));
+        }
+        return String.join("/", encodedSegments);
     }
 }

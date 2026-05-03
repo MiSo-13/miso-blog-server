@@ -123,6 +123,7 @@ public class LocalRepositoryAnalysisService {
 
         int commitLimit = request.commitLimit() == null ? DEFAULT_COMMIT_LIMIT : request.commitLimit();
         boolean includeUncommitted = request.includeUncommittedChanges() == null || request.includeUncommittedChanges();
+        boolean deepAnalysis = request.deepAnalysis() == null || request.deepAnalysis();
         LocalRepositoryAnalysisMode mode = request.analysisMode() == null
                 ? LocalRepositoryAnalysisMode.LOCAL_ONLY
                 : request.analysisMode();
@@ -130,7 +131,7 @@ public class LocalRepositoryAnalysisService {
         String sourceSummary = null;
 
         try {
-            LocalGitSnapshot snapshot = localGitRepositoryScanner.scan(repository, commitLimit, includeUncommitted);
+            LocalGitSnapshot snapshot = localGitRepositoryScanner.scan(repository, commitLimit, includeUncommitted, deepAnalysis);
             sourceSummary = secretMaskingService.mask(snapshot.sourceSummary());
             LocalGitSnapshot maskedSnapshot = new LocalGitSnapshot(snapshot.branchName(), sourceSummary);
 
@@ -187,6 +188,17 @@ public class LocalRepositoryAnalysisService {
     @Transactional(readOnly = true)
     public LocalRepositoryAnalysisReportResponse getReport(Long reportId) {
         return LocalRepositoryAnalysisReportResponse.from(getReportOrThrow(reportId), objectMapper);
+    }
+
+    @Transactional
+    public void deleteReports(Long repositoryId) {
+        getRepositoryOrThrow(repositoryId);
+        reportRepository.deleteAll(reportRepository.findAllByLocalRepositoryIdOrderByIdDesc(repositoryId));
+    }
+
+    @Transactional
+    public void deleteReport(Long reportId) {
+        reportRepository.delete(getReportOrThrow(reportId));
     }
 
     @Transactional

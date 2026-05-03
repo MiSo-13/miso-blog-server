@@ -19,6 +19,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -109,6 +110,20 @@ public class LocalRepositoryController {
     @Operation(summary = "로컬 Git 분석 결과 상세 조회")
     public ApiDataResponse<LocalRepositoryAnalysisReportResponse> getReport(@PathVariable Long reportId) {
         return ApiDataResponse.ok(localRepositoryAnalysisService.getReport(reportId));
+    }
+
+    @DeleteMapping("/{repositoryId}/analysis-reports")
+    @Operation(summary = "로컬 Git 분석 결과 전체 삭제", description = "선택한 로컬 저장소의 기존 분석 결과를 모두 삭제하고 다시 분석할 수 있게 합니다.")
+    public ApiDataResponse<Void> deleteReports(@PathVariable Long repositoryId) {
+        localRepositoryAnalysisService.deleteReports(repositoryId);
+        return ApiDataResponse.ok(null);
+    }
+
+    @DeleteMapping("/analysis-reports/{reportId}")
+    @Operation(summary = "로컬 Git 분석 결과 삭제", description = "선택한 로컬 분석 결과 1건을 삭제합니다.")
+    public ApiDataResponse<Void> deleteReport(@PathVariable Long reportId) {
+        localRepositoryAnalysisService.deleteReport(reportId);
+        return ApiDataResponse.ok(null);
     }
 
     @PostMapping("/analysis-reports/{reportId}/blog-post")

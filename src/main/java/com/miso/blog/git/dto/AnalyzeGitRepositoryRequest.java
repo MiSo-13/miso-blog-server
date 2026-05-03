@@ -11,6 +11,8 @@ public record AnalyzeGitRepositoryRequest(
 
         Boolean analyzeAllCommits,
 
+        Boolean deepAnalysis,
+
         @Size(max = 2000)
         String focus,
 

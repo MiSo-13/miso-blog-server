@@ -40,6 +40,9 @@ import java.util.List;
 public class GitRepositoryAnalysisService {
     private static final int DEFAULT_COMMIT_LIMIT = 10;
     private static final int SOURCE_SUMMARY_LIMIT = 45000;
+    private static final int DEEP_SOURCE_SUMMARY_LIMIT = 90000;
+    private static final int CODE_CONTEXT_FILE_LIMIT = 12;
+    private static final int CODE_CONTEXT_PER_FILE_LIMIT = 6000;
 
     private final GitRepositoryRepository gitRepositoryRepository;
     private final GitAnalysisReportRepository gitAnalysisReportRepository;
@@ -118,7 +121,7 @@ public class GitRepositoryAnalysisService {
                     commitLimit
             );
             commitLimit = commits.size();
-            sourceSummary = secretMaskingService.mask(buildSourceSummary(repository, commits));
+            sourceSummary = secretMaskingService.mask(buildSourceSummary(repository, commits, isDeepAnalysis(request)));
             OpenAiGitAnalysisResult result = openAiGitAnalysisClient.analyze(
                     repository.getRepositoryFullName(),
                     repository.getDefaultBranch(),
@@ -176,6 +179,17 @@ public class GitRepositoryAnalysisService {
     @Transactional(readOnly = true)
     public GitAnalysisReportResponse getReport(Long reportId) {
         return GitAnalysisReportResponse.from(getReportOrThrow(reportId), objectMapper);
+    }
+
+    @Transactional
+    public void deleteReports(Long repositoryId) {
+        getRepositoryOrThrow(repositoryId);
+        gitAnalysisReportRepository.deleteAll(gitAnalysisReportRepository.findAllByRepositoryIdOrderByIdDesc(repositoryId));
+    }
+
+    @Transactional
+    public void deleteReport(Long reportId) {
+        gitAnalysisReportRepository.delete(getReportOrThrow(reportId));
     }
 
     @Transactional
@@ -271,11 +285,15 @@ public class GitRepositoryAnalysisService {
                 .build());
     }
 
-    private String buildSourceSummary(GitRepositoryEntity repository, List<RepositoryCommitSnapshot> commits) {
+    private String buildSourceSummary(GitRepositoryEntity repository, List<RepositoryCommitSnapshot> commits, boolean deepAnalysis) {
+        int sourceSummaryLimit = deepAnalysis ? DEEP_SOURCE_SUMMARY_LIMIT : SOURCE_SUMMARY_LIMIT;
         StringBuilder builder = new StringBuilder();
         builder.append("repository: ").append(repository.getRepositoryFullName()).append('\n');
         builder.append("branch: ").append(repository.getDefaultBranch()).append('\n');
         builder.append("commitCount: ").append(commits.size()).append("\n\n");
+        builder.append("deepAnalysis: ").append(deepAnalysis).append("\n\n");
+
+        LinkedHashSet<String> changedSourceFiles = new LinkedHashSet<>();
 
         for (RepositoryCommitSnapshot commit : commits) {
             builder.append("## commit ").append(commit.sha()).append('\n');
@@ -293,8 +311,11 @@ public class GitRepositoryAnalysisService {
                 if (file.patch() != null && !file.patch().isBlank()) {
                     builder.append("```diff\n").append(file.patch()).append("\n```\n");
                 }
+                if (deepAnalysis && isReadableSourceFile(file.filename())) {
+                    changedSourceFiles.add(file.filename());
+                }
 
-                if (builder.length() >= SOURCE_SUMMARY_LIMIT) {
+                if (builder.length() >= sourceSummaryLimit) {
                     builder.append("\n... source summary truncated ...");
                     return builder.toString();
                 }
@@ -302,7 +323,42 @@ public class GitRepositoryAnalysisService {
             builder.append('\n');
         }
 
-        return builder.toString();
+        if (deepAnalysis && !changedSourceFiles.isEmpty()) {
+            appendDeepCodeContext(builder, repository, changedSourceFiles, sourceSummaryLimit);
+        }
+
+        return truncate(builder.toString(), sourceSummaryLimit);
+    }
+
+    private void appendDeepCodeContext(
+            StringBuilder builder,
+            GitRepositoryEntity repository,
+            LinkedHashSet<String> changedSourceFiles,
+            int sourceSummaryLimit
+    ) {
+        builder.append("\n## current source context for deeper analysis\n");
+        builder.append("The following snippets are current branch file contents for files touched by recent commits. Use them to infer structure and implementation intent without copying long code blocks into the blog.\n\n");
+
+        int appendedCount = 0;
+        for (String filePath : changedSourceFiles) {
+            if (appendedCount >= CODE_CONTEXT_FILE_LIMIT || builder.length() >= sourceSummaryLimit) {
+                break;
+            }
+            String content = gitHubRepositoryClient.fetchFileContent(
+                    repository.getRepositoryFullName(),
+                    repository.getDefaultBranch(),
+                    filePath,
+                    CODE_CONTEXT_PER_FILE_LIMIT
+            );
+            if (content == null || content.isBlank()) {
+                continue;
+            }
+            builder.append("### file ").append(filePath).append('\n');
+            builder.append("```").append(languageHint(filePath)).append('\n')
+                    .append(content)
+                    .append("\n```\n\n");
+            appendedCount++;
+        }
     }
 
     private int resolveCommitLimit(AnalyzeGitRepositoryRequest request) {
@@ -310,6 +366,10 @@ public class GitRepositoryAnalysisService {
             return Math.max(1, maxAllCommitLimit);
         }
         return request.commitLimit() == null ? DEFAULT_COMMIT_LIMIT : request.commitLimit();
+    }
+
+    private boolean isDeepAnalysis(AnalyzeGitRepositoryRequest request) {
+        return request.deepAnalysis() == null || request.deepAnalysis();
     }
 
     private String writeJson(Object value) {
@@ -362,6 +422,69 @@ public class GitRepositoryAnalysisService {
                     .forEach(values::add);
         }
         return new ArrayList<>(values);
+    }
+
+    private boolean isReadableSourceFile(String filePath) {
+        if (filePath == null || filePath.isBlank()) {
+            return false;
+        }
+        String lower = filePath.toLowerCase();
+        if (lower.contains("application-private") || lower.endsWith(".lock") || lower.endsWith(".png") || lower.endsWith(".jpg")
+                || lower.endsWith(".jpeg") || lower.endsWith(".gif") || lower.endsWith(".webp") || lower.endsWith(".ico")
+                || lower.endsWith(".pdf") || lower.endsWith(".zip") || lower.endsWith(".jar")) {
+            return false;
+        }
+        return lower.endsWith(".java")
+                || lower.endsWith(".kt")
+                || lower.endsWith(".js")
+                || lower.endsWith(".ts")
+                || lower.endsWith(".tsx")
+                || lower.endsWith(".jsx")
+                || lower.endsWith(".yml")
+                || lower.endsWith(".yaml")
+                || lower.endsWith(".properties")
+                || lower.endsWith(".gradle")
+                || lower.endsWith(".md")
+                || lower.endsWith(".json")
+                || lower.endsWith(".sql")
+                || lower.endsWith(".html")
+                || lower.endsWith(".css")
+                || lower.endsWith(".scss");
+    }
+
+    private String languageHint(String filePath) {
+        if (filePath == null) {
+            return "";
+        }
+        String lower = filePath.toLowerCase();
+        if (lower.endsWith(".java")) {
+            return "java";
+        }
+        if (lower.endsWith(".kt")) {
+            return "kotlin";
+        }
+        if (lower.endsWith(".js") || lower.endsWith(".jsx")) {
+            return "javascript";
+        }
+        if (lower.endsWith(".ts") || lower.endsWith(".tsx")) {
+            return "typescript";
+        }
+        if (lower.endsWith(".yml") || lower.endsWith(".yaml")) {
+            return "yaml";
+        }
+        if (lower.endsWith(".json")) {
+            return "json";
+        }
+        if (lower.endsWith(".sql")) {
+            return "sql";
+        }
+        if (lower.endsWith(".html")) {
+            return "html";
+        }
+        if (lower.endsWith(".css") || lower.endsWith(".scss")) {
+            return "css";
+        }
+        return "";
     }
 
     private String choose(String primary, String fallback) {

@@ -139,6 +139,11 @@ public class OpenAiGitAnalysisClient {
                 이 개발자가 실제로 구현한 기능, 겪었을 법한 설계 판단, 트러블슈팅 포인트를 최대한 많이 찾아라.
                 단, private code를 그대로 길게 복사하지 말고 블로그 독자가 이해할 수 있는 설명으로 재구성하라.
 
+                Deep analysis instructions:
+                - If "current source context for deeper analysis" exists, analyze not only patches but also current code structure, layer responsibilities, exception handling, configuration flow, and tests.
+                - Prefer specific blog ideas that explain why the implementation was split this way, what problem it avoids, and which files prove it.
+                - Each topicCandidates.reason should mention concrete file responsibilities or code flow, not just generic technology names.
+
                 %s
                 """.formatted(
                 repositoryFullName,

@@ -12,6 +12,8 @@ public record AnalyzeLocalRepositoryRequest(
 
         Boolean includeUncommittedChanges,
 
+        Boolean deepAnalysis,
+
         LocalRepositoryAnalysisMode analysisMode,
 
         @Size(max = 2000)

@@ -976,3 +976,63 @@ DELETE /api/blog-reference-urls/{referenceUrlId}
 ```
 
 삭제하면 이후 AI 작업에서 더 이상 참고하지 않습니다. 단순히 잠시 빼고 싶다면 삭제보다 `active=false` 수정을 권장합니다.
+
+## Git 분석 삭제 및 깊은 분석 옵션
+
+프론트에서는 사용자가 GitHub/로컬 저장소 분석 결과를 삭제하고 다시 분석할 수 있게 처리합니다. 분석 결과를 삭제해도 이미 생성된 블로그 글은 삭제되지 않습니다. 삭제 대상은 분석 리포트입니다.
+
+### GitHub 분석 결과 삭제
+
+```http
+DELETE /api/git-repositories/analysis-reports/{reportId}
+DELETE /api/git-repositories/{repositoryId}/analysis-reports
+```
+
+- 첫 번째 API는 분석 결과 1건만 삭제합니다.
+- 두 번째 API는 해당 GitHub 저장소의 분석 결과를 모두 삭제합니다.
+- 삭제 후 프론트는 `GET /api/git-repositories/{repositoryId}/analysis-reports`를 다시 호출해 목록을 갱신하면 됩니다.
+
+### 로컬 저장소 분석 결과 삭제
+
+```http
+DELETE /api/local-repositories/analysis-reports/{reportId}
+DELETE /api/local-repositories/{repositoryId}/analysis-reports
+```
+
+GitHub 분석과 동일하게 1건 삭제와 전체 삭제를 지원합니다.
+
+### 깊은 분석 옵션
+
+분석 요청에 `deepAnalysis`를 추가할 수 있습니다. 기본값은 `true`입니다.
+
+```json
+{
+  "commitLimit": 20,
+  "analyzeAllCommits": false,
+  "deepAnalysis": true,
+  "focus": "API 설계와 예외 처리 흐름을 중심으로 글감을 찾아줘",
+  "createBlogPost": false
+}
+```
+
+로컬 저장소 분석:
+
+```json
+{
+  "commitLimit": 20,
+  "includeUncommittedChanges": true,
+  "deepAnalysis": true,
+  "analysisMode": "LOCAL_ONLY",
+  "focus": "서비스 계층과 테스트 코드까지 보고 깊게 분석해줘",
+  "createBlogPost": false
+}
+```
+
+`deepAnalysis=true`이면 최근 변경 patch만 보지 않고, 변경된 주요 소스 파일의 현재 코드 일부도 함께 분석 컨텍스트에 포함합니다. 그래서 API, 서비스, 엔티티, 설정, 테스트가 어떻게 이어지는지 더 구체적인 글감을 뽑을 수 있습니다.
+
+프론트 권장 UI:
+
+- 분석 버튼 옆에 `깊게 분석` 토글을 기본 ON으로 둡니다.
+- GitHub/OpenAI 분석에서는 “깊게 분석을 켜면 변경된 코드 일부가 AI 분석 컨텍스트에 포함될 수 있습니다” 안내를 보여주세요.
+- 분석 결과 목록에는 `삭제` 버튼과 `전체 삭제 후 다시 분석` 버튼을 제공합니다.
+- 전체 삭제 후 다시 분석은 `DELETE 전체 삭제 API` 성공 후 기존 분석 요청을 다시 보내는 흐름으로 구현하면 됩니다.
