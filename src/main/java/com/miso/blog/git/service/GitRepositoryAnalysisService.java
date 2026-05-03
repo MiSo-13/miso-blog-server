@@ -27,6 +27,7 @@ import com.miso.blog.post.service.LocalBlogDraftComposer;
 import com.miso.blog.post.service.OpenAiBlogDraftComposer;
 import com.miso.blog.post.service.BlogPostService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -49,6 +50,9 @@ public class GitRepositoryAnalysisService {
     private final OpenAiBlogDraftComposer openAiBlogDraftComposer;
     private final SecretMaskingService secretMaskingService;
     private final ObjectMapper objectMapper;
+
+    @Value("${blog.github.analysis.max-all-commits:300}")
+    private int maxAllCommitLimit;
 
     @Transactional
     public GitRepositoryResponse createRepository(CreateGitRepositoryRequest request) {
@@ -103,7 +107,7 @@ public class GitRepositoryAnalysisService {
             throw new GeneralException(ErrorCode.CONFLICT, "비활성화된 저장소는 분석할 수 없습니다.");
         }
 
-        int commitLimit = request.commitLimit() == null ? DEFAULT_COMMIT_LIMIT : request.commitLimit();
+        int commitLimit = resolveCommitLimit(request);
         String focus = trimToNull(request.focus());
         String sourceSummary = null;
 
@@ -113,6 +117,7 @@ public class GitRepositoryAnalysisService {
                     repository.getDefaultBranch(),
                     commitLimit
             );
+            commitLimit = commits.size();
             sourceSummary = secretMaskingService.mask(buildSourceSummary(repository, commits));
             OpenAiGitAnalysisResult result = openAiGitAnalysisClient.analyze(
                     repository.getRepositoryFullName(),
@@ -298,6 +303,13 @@ public class GitRepositoryAnalysisService {
         }
 
         return builder.toString();
+    }
+
+    private int resolveCommitLimit(AnalyzeGitRepositoryRequest request) {
+        if (Boolean.TRUE.equals(request.analyzeAllCommits())) {
+            return Math.max(1, maxAllCommitLimit);
+        }
+        return request.commitLimit() == null ? DEFAULT_COMMIT_LIMIT : request.commitLimit();
     }
 
     private String writeJson(Object value) {

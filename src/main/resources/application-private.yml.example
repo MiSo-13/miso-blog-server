@@ -24,6 +24,9 @@ github:
   pages-content-root-path: _posts
   pages-base-url:
   pages-custom-domain:
+  analysis:
+    # analyzeAllCommits=true일 때 최대 몇 개 commit까지 훑을지 제한합니다.
+    max-all-commits: 300
 
 blog:
   local-repositories:

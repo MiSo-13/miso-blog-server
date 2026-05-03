@@ -38,20 +38,43 @@ public class GitHubRepositoryClient {
 
     public List<RepositoryCommitSnapshot> fetchRecentCommits(String repositoryFullName, String branch, int limit) {
         validateToken();
+        if (limit < 1) {
+            return List.of();
+        }
 
-        JsonNode commits = fetchJson(
-                GITHUB_API_BASE_URL
-                        + "/repos/" + repositoryFullName
-                        + "/commits?sha=" + urlEncode(branch)
-                        + "&per_page=" + limit
-        );
-
+        List<JsonNode> commitSummaries = fetchCommitSummaries(repositoryFullName, branch, limit);
         List<RepositoryCommitSnapshot> snapshots = new ArrayList<>();
-        for (JsonNode commitSummary : commits) {
+        for (JsonNode commitSummary : commitSummaries) {
             String sha = commitSummary.path("sha").asText();
             snapshots.add(fetchCommitDetail(repositoryFullName, sha));
         }
         return snapshots;
+    }
+
+    private List<JsonNode> fetchCommitSummaries(String repositoryFullName, String branch, int limit) {
+        List<JsonNode> summaries = new ArrayList<>();
+        int page = 1;
+        while (summaries.size() < limit) {
+            int perPage = Math.min(100, limit - summaries.size());
+            JsonNode commits = fetchJson(
+                    GITHUB_API_BASE_URL
+                            + "/repos/" + repositoryFullName
+                            + "/commits?sha=" + urlEncode(branch)
+                            + "&per_page=" + perPage
+                            + "&page=" + page
+            );
+            if (!commits.isArray() || commits.isEmpty()) {
+                break;
+            }
+            for (JsonNode commitSummary : commits) {
+                summaries.add(commitSummary);
+            }
+            if (commits.size() < perPage) {
+                break;
+            }
+            page++;
+        }
+        return summaries;
     }
 
     private RepositoryCommitSnapshot fetchCommitDetail(String repositoryFullName, String sha) {

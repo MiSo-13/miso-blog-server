@@ -37,6 +37,8 @@ github:
   pages-content-root-path: _posts
   pages-base-url:
   pages-custom-domain:
+  analysis:
+    max-all-commits: 300
 
 blog:
   local-repositories:
@@ -52,6 +54,8 @@ blog:
 GitHub Pages 발행을 사용하려면 `github.token`에 대상 저장소 `Contents: Read and write` 권한이 필요합니다. Fine-grained token을 권장하고, 대상 저장소만 선택하는 것이 안전합니다.
 
 기본 흐름은 `github.token`, `github.owner`만 private에 입력하고, 프론트에서 저장소와 브랜치를 선택하는 방식입니다. 직접 고정하고 싶을 때만 `pages-repository-name` 또는 `pages-repository-full-name`을 입력하세요.
+
+`github.analysis.max-all-commits`는 GitHub 저장소 분석에서 `analyzeAllCommits=true`를 사용할 때 최대 몇 개 commit까지 조회할지 정합니다. 값이 너무 크면 GitHub API 호출과 OpenAI 분석 시간이 길어질 수 있으므로 기본값 300에서 시작하는 것을 권장합니다.
 
 로컬 Git 분석은 서버가 접근 가능한 로컬 경로를 직접 읽습니다. 자주 분석할 프로젝트는 `blog.local-repositories.defaults`에 후보로 적어두면 프론트에서 `GET /api/local-repositories/defaults`로 불러와 선택 UI를 만들 수 있습니다. 이 값도 개인 PC 경로라서 `application-private.yml`에서만 관리하는 것을 권장합니다.
 
@@ -80,6 +84,7 @@ Docker 배포에서는 사용자 PC의 `C:\...` 경로를 컨테이너가 직접
 | `GITHUB_PAGES_CONTENT_ROOT_PATH` | 글 파일 저장 경로. 기본값 `_posts` |
 | `GITHUB_PAGES_BASE_URL` | GitHub Pages 공개 URL |
 | `GITHUB_PAGES_CUSTOM_DOMAIN` | 자체 도메인 |
+| `GITHUB_ANALYSIS_MAX_ALL_COMMITS` | 전체 GitHub 분석 모드에서 조회할 최대 commit 수. 기본값 300 |
 | `BLOG_LOCAL_REPOSITORY_CLONE_BASE_DIR` | GitHub에서 선택한 분석 대상 repo를 clone할 컨테이너 내부 경로 |
 | `BLOG_MEDIA_UPLOAD_DIR` | 블로그 이미지 저장 경로 |
 | `BLOG_MEDIA_PUBLIC_URL_PREFIX` | 이미지 public URL prefix |

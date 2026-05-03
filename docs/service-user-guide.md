@@ -108,6 +108,20 @@ POST /api/ai-jobs/{jobId}/retry
 
 GitHub 저장소 분석은 GitHub API 조회와 OpenAI 분석이 이어지므로 1분 이상 걸릴 수 있습니다. 프록시나 다른 서버를 거쳐 호출하면 동기 API에서 504 Gateway Time-out이 날 수 있으니, 프론트에서는 `POST /api/ai-jobs/git-repositories/{repositoryId}/analyze`를 기본 분석 버튼으로 사용하세요.
 
+예전 commit까지 보고 싶다면 GitHub 분석 요청에 `analyzeAllCommits=true`를 사용합니다. 서버는 안전을 위해 설정된 최대 commit 수까지만 조회합니다. 기본값은 300개입니다.
+
+```json
+{
+  "analyzeAllCommits": true,
+  "focus": "예전 구현과 최근 변경을 함께 보고 블로그 글감을 많이 찾아줘",
+  "createBlogPost": false
+}
+```
+
+프론트 안내 문구 예시:
+
+> 전체 분석은 오래 걸릴 수 있습니다. 오래된 commit까지 훑어서 더 많은 글감을 찾지만, repository 규모가 크면 몇 분 정도 걸릴 수 있습니다.
+
 ## 개발 블로그 작성 가이드
 
 개발 블로그 흐름은 “내가 실제로 구현한 코드”에서 글감을 최대한 많이 뽑아내는 것이 목표입니다.

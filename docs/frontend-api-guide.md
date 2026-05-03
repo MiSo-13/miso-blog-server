@@ -60,6 +60,16 @@ POST /api/ai-jobs/git-repositories/{repositoryId}/analyze
 
 요청 body는 `POST /api/git-repositories/{repositoryId}/analyze`와 같습니다. GitHub commit 조회와 OpenAI 분석은 1분 이상 걸릴 수 있으므로, 프론트에서는 동기 분석 API보다 이 job API를 기본으로 사용하세요.
 
+전체 commit을 훑고 싶으면 `analyzeAllCommits=true`를 보냅니다. 서버는 운영 보호를 위해 `GITHUB_ANALYSIS_MAX_ALL_COMMITS` 설정값까지만 조회합니다. 기본값은 300개입니다.
+
+```json
+{
+  "analyzeAllCommits": true,
+  "focus": "예전 구현과 최근 변경을 함께 보고 블로그 글감을 많이 찾아줘",
+  "createBlogPost": false
+}
+```
+
 ### AI 추가 수정 job
 
 ```http
@@ -377,6 +387,17 @@ POST /api/git-repositories/analysis-reports/{reportId}/write-blog-post
 4. `status=SUCCEEDED`이면 `resultJson` 안의 분석 결과를 표시
 5. `resultBlogPostId`가 있으면 글 상세로 이동 가능
 6. `status=FAILED`이면 `failure.message`와 `failure.actionGuide` 표시
+
+분석 요청 옵션:
+
+| 필드 | 설명 |
+| --- | --- |
+| `commitLimit` | 최근 몇 개 commit을 볼지. 기본값 10, 최대 300 |
+| `analyzeAllCommits` | true면 `commitLimit` 대신 전체 분석 모드 사용 |
+| `focus` | 분석 방향 |
+| `createBlogPost` | true면 분석 성공 후 초안까지 생성 |
+
+`analyzeAllCommits=true`는 실제 전체 이력을 대상으로 하되, 서버 설정 `blog.github.analysis.max-all-commits`까지만 조회합니다. 기본값은 300입니다. 오래된 commit까지 보고 싶을 때 사용하고, 프론트에서는 “전체 분석은 오래 걸릴 수 있음” 안내를 보여주세요.
 
 ## 블로그 글
 
