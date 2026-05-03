@@ -4,6 +4,10 @@ spring:
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:local}
     include: private
+  servlet:
+    multipart:
+      max-file-size: ${BLOG_MEDIA_MAX_FILE_SIZE:10MB}
+      max-request-size: ${BLOG_MEDIA_MAX_REQUEST_SIZE:30MB}
   jpa:
     show-sql: true
     hibernate:
@@ -31,6 +35,10 @@ blog:
     token: ${GITHUB_TOKEN:${github.token:}}
   publish:
     base-url: ${BLOG_PUBLIC_BASE_URL:http://localhost:8010}
+  media:
+    upload-dir: ${BLOG_MEDIA_UPLOAD_DIR:uploads/blog-media}
+    public-url-prefix: ${BLOG_MEDIA_PUBLIC_URL_PREFIX:/media}
+    max-file-size-bytes: ${BLOG_MEDIA_MAX_FILE_SIZE_BYTES:10485760}
 
 ---
 spring:
