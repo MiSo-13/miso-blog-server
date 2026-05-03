@@ -390,6 +390,7 @@ Form data:
   "fileSize": 123456,
   "relativePath": "2026/05/03/uuid.jpg",
   "publicUrl": "/media/2026/05/03/uuid.jpg",
+  "uploadGroupId": null,
   "altText": "트러플 크림 파스타",
   "note": "메뉴 설명 문단 근처에 배치",
   "createdAt": "2026-05-03T11:00:00",
@@ -402,6 +403,64 @@ GET /api/media/images
 ```
 
 업로드된 이미지 목록을 최신순으로 조회합니다.
+
+### 여러 장 업로드
+
+일반 블로그 작성 화면에서는 여러 사진을 한 번에 선택해서 업로드하는 흐름을 권장합니다. 서버는 같은 요청으로 올라온 사진에 동일한 `uploadGroupId`를 부여합니다. 이후 일반 블로그 작성 요청에서 `photoGroupId`만 보내면 서버가 해당 묶음의 사진 URL과 설명을 자동으로 본문 작성 자료에 포함합니다.
+
+```http
+POST /api/media/images/batch
+Content-Type: multipart/form-data
+```
+
+Form data:
+
+| 이름 | 필수 | 설명 |
+| --- | --- | --- |
+| `files` | Y | 여러 이미지 파일. 같은 key로 반복 전송 |
+| `altTexts` | N | 파일 순서에 맞춘 대체 텍스트 목록 |
+| `notes` | N | 파일 순서에 맞춘 사진 메모 목록 |
+
+응답 예시:
+
+```json
+{
+  "uploadGroupId": "7f9d1f4c-7f4f-4f43-95aa-1f9f2d3f9d11",
+  "uploadedCount": 2,
+  "assets": [
+    {
+      "id": 10,
+      "originalFilename": "outside.jpg",
+      "publicUrl": "/media/2026/05/03/outside.jpg",
+      "uploadGroupId": "7f9d1f4c-7f4f-4f43-95aa-1f9f2d3f9d11",
+      "altText": "가게 외관",
+      "note": "도입부 근처에 배치"
+    },
+    {
+      "id": 11,
+      "originalFilename": "pasta.jpg",
+      "publicUrl": "/media/2026/05/03/pasta.jpg",
+      "uploadGroupId": "7f9d1f4c-7f4f-4f43-95aa-1f9f2d3f9d11",
+      "altText": "트러플 크림 파스타",
+      "note": "메뉴 설명 문단에 배치"
+    }
+  ]
+}
+```
+
+사진 묶음 조회:
+
+```http
+GET /api/media/images/groups?uploadGroupId=7f9d1f4c-7f4f-4f43-95aa-1f9f2d3f9d11
+```
+
+프론트 권장 동작:
+
+- 사용자가 여러 사진을 선택하면 `POST /api/media/images/batch`를 호출합니다.
+- 응답의 `uploadGroupId`를 일반 블로그 작성 form 상태에 저장합니다.
+- 업로드 직후 썸네일은 `assets[].publicUrl`로 표시합니다.
+- 글 작성 요청에는 `photoGroupId` 또는 개별 `photoAssetIds`를 보냅니다.
+- 사진별 설명/메모는 현재 업로드 전에 입력받아 `altTexts`, `notes`로 함께 전송하는 방식을 사용합니다.
 
 ### 수동 초안 생성
 
@@ -440,6 +499,7 @@ POST /api/blog-posts/draft/ai-general
   ],
   "memo": "주말 저녁 방문. 내부는 조용했고 데이트하기 좋음. 가격은 조금 있지만 만족도 높음.",
   "keywords": ["성수 맛집", "파스타", "데이트", "트러플"],
+  "photoGroupId": "7f9d1f4c-7f4f-4f43-95aa-1f9f2d3f9d11",
   "photos": [
     {
       "url": "/media/2026/05/03/outside.jpg",
@@ -459,6 +519,14 @@ POST /api/blog-posts/draft/ai-general
   "markReviewReady": true
 }
 ```
+
+사진 입력 방식:
+
+- `photoGroupId`: 여러 장 업로드 응답의 묶음 ID입니다. 가장 추천하는 방식입니다.
+- `photoAssetIds`: 사용자가 이미지 목록에서 고른 특정 사진 ID 목록입니다.
+- `photos`: 외부 이미지 URL이나 임시 자리표시 설명을 직접 넘길 때 사용합니다.
+
+`photoGroupId`와 `photos`를 함께 보내면 서버는 둘을 합쳐서 AI 작성 자료로 사용합니다. 같은 asset이 `photoAssetIds`와 `photoGroupId`에 중복되어도 한 번만 포함합니다.
 
 `category`:
 

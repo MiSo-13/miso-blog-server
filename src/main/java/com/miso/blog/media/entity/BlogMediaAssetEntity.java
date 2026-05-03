@@ -39,6 +39,9 @@ public class BlogMediaAssetEntity extends BaseTimeEntity {
     @Column(name = "public_url", nullable = false, length = 1000)
     private String publicUrl;
 
+    @Column(name = "upload_group_id", length = 80)
+    private String uploadGroupId;
+
     @Column(name = "alt_text", length = 500)
     private String altText;
 
@@ -53,6 +56,7 @@ public class BlogMediaAssetEntity extends BaseTimeEntity {
             long fileSize,
             String relativePath,
             String publicUrl,
+            String uploadGroupId,
             String altText,
             String note
     ) {
@@ -62,6 +66,7 @@ public class BlogMediaAssetEntity extends BaseTimeEntity {
         this.fileSize = fileSize;
         this.relativePath = relativePath;
         this.publicUrl = publicUrl;
+        this.uploadGroupId = uploadGroupId;
         this.altText = altText;
         this.note = note;
     }

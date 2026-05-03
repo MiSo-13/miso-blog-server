@@ -418,11 +418,50 @@ Form data:
 
 응답의 `publicUrl`을 일반 블로그 작성 요청의 `photos[].url`에 넣습니다.
 
+여러 장을 한꺼번에 올릴 때는 묶음 업로드 API를 사용합니다.
+
+```http
+POST /api/media/images/batch
+Content-Type: multipart/form-data
+```
+
+Form data:
+
+| 입력 | 필수 | 설명 |
+| --- | --- | --- |
+| `files` | 예 | 여러 이미지 파일 |
+| `altTexts` | 아니오 | 파일 순서에 맞춘 사진 설명 |
+| `notes` | 아니오 | 파일 순서에 맞춘 배치 메모 또는 참고 메모 |
+
+응답에는 `uploadGroupId`와 업로드된 `assets`가 포함됩니다. 일반 블로그 작성 요청에 `photoGroupId`를 넣으면 이 사진 묶음 전체를 기반으로 글을 작성합니다.
+
+```json
+{
+  "uploadGroupId": "7f9d1f4c-7f4f-4f43-95aa-1f9f2d3f9d11",
+  "uploadedCount": 3,
+  "assets": [
+    {
+      "id": 10,
+      "publicUrl": "/media/2026/05/03/outside.jpg",
+      "altText": "가게 외관",
+      "note": "도입부 근처"
+    }
+  ]
+}
+```
+
+묶음 조회:
+
+```http
+GET /api/media/images/groups?uploadGroupId=7f9d1f4c-7f4f-4f43-95aa-1f9f2d3f9d11
+```
+
 프론트 권장 UI:
 
 - 업로드 후 썸네일 표시
 - 사진별 설명 입력
 - 사진별 “본문 어디에 넣을지” 메모 입력
+- 여러 장 업로드 후 `uploadGroupId`를 글 작성 form에 유지
 - 대표 사진 선택 기능은 추후 확장 가능
 
 ### 2. 일반 블로그 초안 생성
@@ -453,6 +492,7 @@ POST /api/ai-jobs/blog-posts/draft/ai-general
   ],
   "memo": "주말 저녁 방문. 매장은 조용하고 데이트하기 좋은 분위기. 가격은 조금 있지만 만족도는 높았음. 직원 응대가 친절했고 음식 나오는 속도도 괜찮았음.",
   "keywords": ["성수 맛집", "성수 파스타", "데이트 맛집", "트러플"],
+  "photoGroupId": "7f9d1f4c-7f4f-4f43-95aa-1f9f2d3f9d11",
   "photos": [
     {
       "url": "/media/2026/05/03/outside.jpg",
@@ -472,6 +512,16 @@ POST /api/ai-jobs/blog-posts/draft/ai-general
   "markReviewReady": true
 }
 ```
+
+사진 자료는 세 가지 방식으로 넣을 수 있습니다.
+
+| 입력 | 용도 |
+| --- | --- |
+| `photoGroupId` | 여러 장 업로드 묶음 전체를 사용 |
+| `photoAssetIds` | 이미지 목록에서 선택한 특정 사진만 사용 |
+| `photos` | 외부 이미지 URL이나 직접 작성한 사진 설명 사용 |
+
+일반적인 화면에서는 `photoGroupId`를 추천합니다. 사용자가 업로드한 묶음 전체를 글 작성 자료로 넘길 수 있어 입력이 짧고, 서버가 사진 URL과 설명을 자동으로 정리합니다.
 
 카테고리:
 

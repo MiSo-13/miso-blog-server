@@ -3,6 +3,7 @@ package com.miso.blog.media.service;
 import com.miso.blog.common.code.ErrorCode;
 import com.miso.blog.common.exception.GeneralException;
 import com.miso.blog.media.dto.BlogMediaAssetResponse;
+import com.miso.blog.media.dto.BlogMediaBatchUploadResponse;
 import com.miso.blog.media.entity.BlogMediaAssetEntity;
 import com.miso.blog.media.repository.BlogMediaAssetRepository;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +18,8 @@ import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
+import java.util.stream.IntStream;
 
 @Service
 @RequiredArgsConstructor
@@ -27,6 +30,7 @@ public class BlogMediaAssetService {
             "image/webp",
             "image/gif"
     );
+    private static final int MAX_BATCH_FILE_COUNT = 30;
 
     private final BlogMediaAssetRepository blogMediaAssetRepository;
     private final BlogMediaPathResolver blogMediaPathResolver;
@@ -42,6 +46,47 @@ public class BlogMediaAssetService {
 
     @Transactional
     public BlogMediaAssetResponse uploadImage(MultipartFile file, String altText, String note) {
+        return uploadImage(file, altText, note, null);
+    }
+
+    @Transactional
+    public BlogMediaBatchUploadResponse uploadImages(List<MultipartFile> files, List<String> altTexts, List<String> notes) {
+        if (files == null || files.isEmpty()) {
+            throw new GeneralException(ErrorCode.BAD_REQUEST, "업로드할 이미지 파일이 필요합니다.");
+        }
+        if (files.size() > MAX_BATCH_FILE_COUNT) {
+            throw new GeneralException(ErrorCode.BAD_REQUEST, "이미지는 한 번에 최대 " + MAX_BATCH_FILE_COUNT + "장까지 업로드할 수 있습니다.");
+        }
+
+        String uploadGroupId = UUID.randomUUID().toString();
+        List<BlogMediaAssetResponse> assets = IntStream.range(0, files.size())
+                .mapToObj(index -> uploadImage(files.get(index), valueAt(altTexts, index), valueAt(notes, index), uploadGroupId))
+                .toList();
+
+        return new BlogMediaBatchUploadResponse(uploadGroupId, assets.size(), assets);
+    }
+
+    @Transactional(readOnly = true)
+    public List<BlogMediaAssetResponse> getAssets() {
+        return blogMediaAssetRepository.findAllByOrderByIdDesc()
+                .stream()
+                .map(BlogMediaAssetResponse::from)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<BlogMediaAssetResponse> getAssetsByGroup(String uploadGroupId) {
+        String normalizedGroupId = trimToNull(uploadGroupId);
+        if (normalizedGroupId == null) {
+            throw new GeneralException(ErrorCode.BAD_REQUEST, "사진 묶음 ID가 필요합니다.");
+        }
+        return blogMediaAssetRepository.findAllByUploadGroupIdOrderByIdAsc(normalizedGroupId)
+                .stream()
+                .map(BlogMediaAssetResponse::from)
+                .toList();
+    }
+
+    private BlogMediaAssetResponse uploadImage(MultipartFile file, String altText, String note, String uploadGroupId) {
         validateFile(file);
 
         String originalFilename = blogMediaPathResolver.sanitizeFilename(file.getOriginalFilename());
@@ -68,18 +113,11 @@ public class BlogMediaAssetService {
                 .fileSize(file.getSize())
                 .relativePath(relativePath)
                 .publicUrl(buildPublicUrl(relativePath))
+                .uploadGroupId(trimToNull(uploadGroupId))
                 .altText(trimToNull(altText))
                 .note(trimToNull(note))
                 .build());
         return BlogMediaAssetResponse.from(asset);
-    }
-
-    @Transactional(readOnly = true)
-    public List<BlogMediaAssetResponse> getAssets() {
-        return blogMediaAssetRepository.findAllByOrderByIdDesc()
-                .stream()
-                .map(BlogMediaAssetResponse::from)
-                .toList();
     }
 
     private void validateFile(MultipartFile file) {
@@ -104,6 +142,13 @@ public class BlogMediaAssetService {
 
     private String buildPublicUrl(String relativePath) {
         return blogMediaPathResolver.normalizePublicPrefix(publicUrlPrefix) + "/" + relativePath.replace('\\', '/');
+    }
+
+    private String valueAt(List<String> values, int index) {
+        if (values == null || index >= values.size()) {
+            return null;
+        }
+        return values.get(index);
     }
 
     private String trimToNull(String value) {

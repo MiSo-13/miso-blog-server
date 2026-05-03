@@ -30,6 +30,11 @@ public record CreateGeneralBlogPostRequest(
 
         List<@Valid GeneralBlogPhotoRequest> photos,
 
+        List<Long> photoAssetIds,
+
+        @Size(max = 80)
+        String photoGroupId,
+
         @Size(max = 300)
         String imagePlacementNotes,
 

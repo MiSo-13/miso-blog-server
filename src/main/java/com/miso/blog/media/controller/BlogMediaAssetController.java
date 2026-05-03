@@ -2,6 +2,7 @@ package com.miso.blog.media.controller;
 
 import com.miso.blog.common.api.ApiDataResponse;
 import com.miso.blog.media.dto.BlogMediaAssetResponse;
+import com.miso.blog.media.dto.BlogMediaBatchUploadResponse;
 import com.miso.blog.media.service.BlogMediaAssetService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -33,9 +34,25 @@ public class BlogMediaAssetController {
         return ApiDataResponse.ok(blogMediaAssetService.uploadImage(file, altText, note));
     }
 
+    @PostMapping(path = "/batch", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "블로그 이미지 여러 장 업로드", description = "여러 이미지를 한 번에 업로드하고 일반 블로그 작성 요청에 사용할 uploadGroupId와 asset 목록을 반환합니다.")
+    public ApiDataResponse<BlogMediaBatchUploadResponse> uploadImages(
+            @RequestParam("files") List<MultipartFile> files,
+            @RequestParam(required = false) List<String> altTexts,
+            @RequestParam(required = false) List<String> notes
+    ) {
+        return ApiDataResponse.ok(blogMediaAssetService.uploadImages(files, altTexts, notes));
+    }
+
     @GetMapping
     @Operation(summary = "블로그 이미지 목록 조회")
     public ApiDataResponse<List<BlogMediaAssetResponse>> getImages() {
         return ApiDataResponse.ok(blogMediaAssetService.getAssets());
+    }
+
+    @GetMapping("/groups")
+    @Operation(summary = "블로그 이미지 묶음 조회")
+    public ApiDataResponse<List<BlogMediaAssetResponse>> getImagesByGroup(@RequestParam String uploadGroupId) {
+        return ApiDataResponse.ok(blogMediaAssetService.getAssetsByGroup(uploadGroupId));
     }
 }
