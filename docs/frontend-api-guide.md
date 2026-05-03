@@ -163,6 +163,47 @@ POST /api/git-repositories/analysis-reports/{reportId}/write-blog-post
 
 ## 블로그 글
 
+## 블로그 이미지
+
+일반 블로그 작성에 사용할 이미지는 먼저 서버에 업로드한 뒤, 응답의 `publicUrl`을 `POST /api/blog-posts/draft/ai-general` 요청의 `photos[].url`에 넣으면 됩니다.
+
+```http
+POST /api/media/images
+Content-Type: multipart/form-data
+```
+
+Form data:
+
+| 이름 | 필수 | 설명 |
+| --- | --- | --- |
+| `file` | Y | jpg, png, webp, gif 이미지 |
+| `altText` | N | 이미지 대체 텍스트 |
+| `note` | N | 블로그 작성에 참고할 사진 메모 |
+
+응답 예시:
+
+```json
+{
+  "id": 1,
+  "originalFilename": "pasta.jpg",
+  "storedFilename": "uuid.jpg",
+  "contentType": "image/jpeg",
+  "fileSize": 123456,
+  "relativePath": "2026/05/03/uuid.jpg",
+  "publicUrl": "/media/2026/05/03/uuid.jpg",
+  "altText": "트러플 크림 파스타",
+  "note": "메뉴 설명 문단 근처에 배치",
+  "createdAt": "2026-05-03T11:00:00",
+  "updatedAt": "2026-05-03T11:00:00"
+}
+```
+
+```http
+GET /api/media/images
+```
+
+업로드된 이미지 목록을 최신순으로 조회합니다.
+
 ### 수동 초안 생성
 
 ```http
@@ -202,12 +243,12 @@ POST /api/blog-posts/draft/ai-general
   "keywords": ["성수 맛집", "파스타", "데이트", "트러플"],
   "photos": [
     {
-      "url": "https://example.com/outside.jpg",
+      "url": "/media/2026/05/03/outside.jpg",
       "description": "가게 외관 사진",
       "placementNote": "도입부 근처"
     },
     {
-      "url": "https://example.com/pasta.jpg",
+      "url": "/media/2026/05/03/pasta.jpg",
       "description": "트러플 크림 파스타 사진",
       "placementNote": "메뉴 설명 문단"
     }

@@ -61,6 +61,11 @@ GitHub Pages 발행을 사용하려면 `github.token`에 발행 저장소 conten
 | `OPENAI_MODEL` | OpenAI 모델 |
 | `OPENAI_BUDGET_LIMIT_USD` | 월 예산 한도 USD |
 | `GITHUB_TOKEN` | GitHub API Token. GitHub Pages 발행 시 contents write 권한 필요 |
+| `BLOG_MEDIA_UPLOAD_DIR` | 블로그 이미지 저장 경로. 기본값 `uploads/blog-media` |
+| `BLOG_MEDIA_PUBLIC_URL_PREFIX` | 이미지 public URL prefix. 기본값 `/media` |
+| `BLOG_MEDIA_MAX_FILE_SIZE` | multipart 단일 파일 제한. 기본값 `10MB` |
+| `BLOG_MEDIA_MAX_REQUEST_SIZE` | multipart 요청 전체 제한. 기본값 `30MB` |
+| `BLOG_MEDIA_MAX_FILE_SIZE_BYTES` | 서비스 레벨 파일 크기 제한. 기본값 `10485760` |
 
 ## 로컬 인프라
 
@@ -75,6 +80,12 @@ MySQL은 로컬 설치 또는 별도 컨테이너를 사용할 수 있습니다.
 ```sql
 CREATE DATABASE `miso-blog` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
+
+## 블로그 이미지 저장소
+
+기본 업로드 경로는 `uploads/blog-media`입니다. 이 경로는 git에 올라가지 않도록 `.gitignore`에 등록되어 있습니다.
+
+로컬 실행 시 업로드된 이미지는 `/media/{yyyy}/{MM}/{dd}/{filename}` 형태로 접근할 수 있습니다.
 
 ## OpenAI Admin Key
 
