@@ -6,11 +6,14 @@ import com.miso.blog.post.dto.BlogPostSummaryResponse;
 import com.miso.blog.post.dto.BlogPostVersionResponse;
 import com.miso.blog.post.dto.CreateGeneralBlogPostRequest;
 import com.miso.blog.post.dto.CreateBlogPostRequest;
+import com.miso.blog.post.dto.BlogPostQualityReviewRequest;
+import com.miso.blog.post.dto.BlogPostQualityReviewResponse;
 import com.miso.blog.post.dto.UpdateBlogPostRequest;
 import com.miso.blog.post.dto.ReviseBlogPostWithAiRequest;
 import com.miso.blog.post.service.BlogPostService;
 import com.miso.blog.post.service.GeneralBlogPostService;
 import com.miso.blog.post.service.BlogPostRevisionService;
+import com.miso.blog.post.service.BlogPostQualityReviewService;
 import com.miso.blog.publish.dto.ExportVelogMarkdownRequest;
 import com.miso.blog.publish.dto.ExportVelogMarkdownResponse;
 import com.miso.blog.publish.dto.PublishGithubPagesRequest;
@@ -39,6 +42,7 @@ public class BlogPostController {
     private final BlogPostService blogPostService;
     private final GeneralBlogPostService generalBlogPostService;
     private final BlogPostRevisionService blogPostRevisionService;
+    private final BlogPostQualityReviewService blogPostQualityReviewService;
     private final BlogPostPublishService blogPostPublishService;
     private final VelogExportService velogExportService;
 
@@ -88,6 +92,15 @@ public class BlogPostController {
             @Valid @RequestBody ReviseBlogPostWithAiRequest request
     ) {
         return ApiDataResponse.ok(blogPostRevisionService.reviseWithAi(blogPostId, request));
+    }
+
+    @PostMapping("/{blogPostId}/quality-review/ai")
+    @Operation(summary = "AI 블로그 품질 리뷰", description = "AI 티, 근거 없는 문장, 읽기 품질, SEO/수익화 준비도를 검수합니다.")
+    public ApiDataResponse<BlogPostQualityReviewResponse> reviewQuality(
+            @PathVariable Long blogPostId,
+            @Valid @RequestBody(required = false) BlogPostQualityReviewRequest request
+    ) {
+        return ApiDataResponse.ok(blogPostQualityReviewService.review(blogPostId, request));
     }
 
     @PostMapping("/{blogPostId}/review-ready")
