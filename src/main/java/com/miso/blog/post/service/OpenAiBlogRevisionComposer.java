@@ -69,7 +69,9 @@ public class OpenAiBlogRevisionComposer {
                                     응답 필드는 title, summary, contentMarkdown, tags 이다.
                                     기존 글의 핵심 사실과 사용자가 제공한 근거를 유지한다.
                                     사용자가 새로 요청한 수정사항을 우선 반영하되, 없는 사실은 추가하지 않는다.
-                                    Markdown 구조를 유지하고, 읽기 좋은 제목/소제목/문단으로 재작성한다.
+                                    Markdown 구조를 유지하고 읽기 좋은 제목, 소제목, 문단으로 재작성한다.
+                                    실제 URL, 전화번호, 가격, 메뉴, 영업시간이 제공되지 않았다면 임시값이나 예시값을 만들지 않는다.
+                                    `#`, `example.com`, `02-0000-0000` 같은 placeholder 정보는 본문에 넣지 않는다.
                                     """
                             ),
                             Map.of(

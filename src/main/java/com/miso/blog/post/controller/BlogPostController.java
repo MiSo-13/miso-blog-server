@@ -1,6 +1,8 @@
 package com.miso.blog.post.controller;
 
 import com.miso.blog.common.api.ApiDataResponse;
+import com.miso.blog.post.dto.BlogPostQualityImproveRequest;
+import com.miso.blog.post.dto.BlogPostQualityImproveResponse;
 import com.miso.blog.post.dto.BlogPostResponse;
 import com.miso.blog.post.dto.BlogPostSummaryResponse;
 import com.miso.blog.post.dto.BlogPostVersionResponse;
@@ -12,6 +14,7 @@ import com.miso.blog.post.dto.UpdateBlogPostRequest;
 import com.miso.blog.post.dto.ReviseBlogPostWithAiRequest;
 import com.miso.blog.post.service.BlogPostService;
 import com.miso.blog.post.service.GeneralBlogPostService;
+import com.miso.blog.post.service.BlogPostQualityImproveService;
 import com.miso.blog.post.service.BlogPostRevisionService;
 import com.miso.blog.post.service.BlogPostQualityReviewService;
 import com.miso.blog.publish.dto.ExportVelogMarkdownRequest;
@@ -43,6 +46,7 @@ public class BlogPostController {
     private final GeneralBlogPostService generalBlogPostService;
     private final BlogPostRevisionService blogPostRevisionService;
     private final BlogPostQualityReviewService blogPostQualityReviewService;
+    private final BlogPostQualityImproveService blogPostQualityImproveService;
     private final BlogPostPublishService blogPostPublishService;
     private final VelogExportService velogExportService;
 
@@ -101,6 +105,15 @@ public class BlogPostController {
             @Valid @RequestBody(required = false) BlogPostQualityReviewRequest request
     ) {
         return ApiDataResponse.ok(blogPostQualityReviewService.review(blogPostId, request));
+    }
+
+    @PostMapping("/{blogPostId}/quality-improve/ai")
+    @Operation(summary = "AI 블로그 품질 자동 개선", description = "품질 리뷰 결과를 기반으로 AI 재작성을 반복해 발행 전 품질을 개선합니다.")
+    public ApiDataResponse<BlogPostQualityImproveResponse> improveQuality(
+            @PathVariable Long blogPostId,
+            @Valid @RequestBody(required = false) BlogPostQualityImproveRequest request
+    ) {
+        return ApiDataResponse.ok(blogPostQualityImproveService.improve(blogPostId, request));
     }
 
     @PostMapping("/{blogPostId}/review-ready")

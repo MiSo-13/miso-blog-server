@@ -3,6 +3,7 @@ package com.miso.blog.ai.job.controller;
 import com.miso.blog.ai.job.dto.AiJobResponse;
 import com.miso.blog.ai.job.service.AiJobService;
 import com.miso.blog.common.api.ApiDataResponse;
+import com.miso.blog.post.dto.BlogPostQualityImproveRequest;
 import com.miso.blog.post.dto.CreateGeneralBlogPostRequest;
 import com.miso.blog.post.dto.ReviseBlogPostWithAiRequest;
 import io.swagger.v3.oas.annotations.Operation;
@@ -38,6 +39,15 @@ public class AiJobController {
             @Valid @RequestBody ReviseBlogPostWithAiRequest request
     ) {
         return ApiDataResponse.ok(aiJobService.createBlogPostRevisionJob(blogPostId, request));
+    }
+
+    @PostMapping("/blog-posts/{blogPostId}/quality-improve/ai")
+    @Operation(summary = "AI 블로그 품질 자동 개선 작업 시작")
+    public ApiDataResponse<AiJobResponse> createBlogPostQualityImproveJob(
+            @PathVariable Long blogPostId,
+            @Valid @RequestBody(required = false) BlogPostQualityImproveRequest request
+    ) {
+        return ApiDataResponse.ok(aiJobService.createBlogPostQualityImproveJob(blogPostId, request));
     }
 
     @GetMapping

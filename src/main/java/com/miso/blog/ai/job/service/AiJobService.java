@@ -9,6 +9,7 @@ import com.miso.blog.ai.job.entity.AiJobEntity;
 import com.miso.blog.ai.job.repository.AiJobRepository;
 import com.miso.blog.common.code.ErrorCode;
 import com.miso.blog.common.exception.GeneralException;
+import com.miso.blog.post.dto.BlogPostQualityImproveRequest;
 import com.miso.blog.post.dto.CreateGeneralBlogPostRequest;
 import com.miso.blog.post.dto.ReviseBlogPostWithAiRequest;
 import lombok.RequiredArgsConstructor;
@@ -49,6 +50,17 @@ public class AiJobService {
         return AiJobResponse.from(job);
     }
 
+    @Transactional
+    public AiJobResponse createBlogPostQualityImproveJob(Long blogPostId, BlogPostQualityImproveRequest request) {
+        AiJobEntity job = aiJobRepository.save(AiJobEntity.builder()
+                .type(AiJobType.BLOG_POST_QUALITY_IMPROVE)
+                .status(AiJobStatus.PENDING)
+                .requestJson(writeJson(new BlogPostQualityImproveJobRequest(blogPostId, request)))
+                .build());
+        afterCommit(() -> aiJobWorker.runBlogPostQualityImproveJob(job.getId(), blogPostId, request));
+        return AiJobResponse.from(job);
+    }
+
     @Transactional(readOnly = true)
     public List<AiJobResponse> getJobs() {
         return aiJobRepository.findAllByOrderByIdDesc()
@@ -86,6 +98,12 @@ public class AiJobService {
     private record BlogPostRevisionJobRequest(
             Long blogPostId,
             ReviseBlogPostWithAiRequest request
+    ) {
+    }
+
+    private record BlogPostQualityImproveJobRequest(
+            Long blogPostId,
+            BlogPostQualityImproveRequest request
     ) {
     }
 }
