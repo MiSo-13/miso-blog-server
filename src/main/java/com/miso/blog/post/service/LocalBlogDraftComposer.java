@@ -21,9 +21,7 @@ public class LocalBlogDraftComposer {
     ) {
         List<String> selectedKeywords = normalizeSelectedKeywords(request.selectedKeywords(), analysisKeywords);
         TopicCandidateResponse selectedTopic = selectTopic(topicCandidates, request.selectedTopicTitle(), selectedKeywords);
-        String title = selectedTopic == null
-                ? repositoryName + " 구현 기록에서 뽑은 개발 블로그"
-                : selectedTopic.title();
+        String title = resolveTitle(repositoryName, selectedTopic, request.selectedTopicTitle());
         String summary = buildSummary(analysisSummary, selectedKeywords, request.writingFocus());
         String content = buildMarkdown(
                 title,
@@ -97,7 +95,8 @@ public class LocalBlogDraftComposer {
         appendSourceHighlights(builder, sourceSummary);
 
         builder.append("\n## 블로그에서 더 풀어볼 포인트\n\n");
-        for (TopicCandidateResponse topic : topicCandidates.subList(0, Math.min(topicCandidates.size(), 5))) {
+        List<TopicCandidateResponse> safeTopicCandidates = topicCandidates == null ? List.of() : topicCandidates;
+        for (TopicCandidateResponse topic : safeTopicCandidates.subList(0, Math.min(safeTopicCandidates.size(), 5))) {
             builder.append("- ").append(topic.title()).append(": ").append(defaultText(topic.reason(), "구현 맥락을 설명하기 좋습니다.")).append('\n');
         }
 
@@ -178,6 +177,17 @@ public class LocalBlogDraftComposer {
             }
         }
         return topicCandidates.get(0);
+    }
+
+    private String resolveTitle(String repositoryName, TopicCandidateResponse selectedTopic, String selectedTopicTitle) {
+        String requestedTitle = trimToNull(selectedTopicTitle);
+        if (requestedTitle != null) {
+            return requestedTitle;
+        }
+        if (selectedTopic != null && trimToNull(selectedTopic.title()) != null) {
+            return selectedTopic.title().trim();
+        }
+        return repositoryName + " 구현 기록에서 뽑은 개발 블로그";
     }
 
     private List<String> mergeTags(List<String> first, List<String> second) {
