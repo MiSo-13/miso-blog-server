@@ -6,12 +6,6 @@ db:
   username: root
   password: 1234
 
-rabbitmq:
-  host: localhost
-  port: 5672
-  username: guest
-  password: guest
-
 openai:
   api-key:
   admin-key:

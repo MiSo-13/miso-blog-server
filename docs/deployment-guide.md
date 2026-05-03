@@ -4,14 +4,13 @@
 
 ## 기본 포트
 
-MAGI 서버와 충돌하지 않도록 기본 포트를 분리했습니다.
+MAGI 서버와 충돌하지 않도록 기본 서버 포트를 분리했습니다.
 
 | 항목 | 기본값 | 설명 |
 | --- | --- | --- |
 | Miso Blog Server | `8010` | 외부 접근 API 포트 |
-| Miso RabbitMQ | `5673` | host에 노출되는 AMQP 포트 |
-| Miso RabbitMQ UI | `15673` | host에 노출되는 관리 UI 포트 |
-| 컨테이너 내부 RabbitMQ | `5672` | 서버 컨테이너가 접근하는 내부 포트 |
+
+현재 AI job은 Spring `@Async`로 서버 내부에서 실행하므로 RabbitMQ 컨테이너는 배포 구성에서 제외했습니다.
 
 ## 배포 환경 파일
 
@@ -81,6 +80,6 @@ blog:
 - `OPENAI_ADMIN_KEY`
 - `GITHUB_TOKEN`
 - `GITHUB_OWNER`
-- 선택: `MISO_BLOG_PORT`, `RABBITMQ_PORT`, `RABBITMQ_MANAGEMENT_PORT`, `BLOG_PUBLIC_BASE_URL`
+- 선택: `MISO_BLOG_PORT`, `BLOG_PUBLIC_BASE_URL`
 
 민감값은 repository에 커밋하지 말고 Jenkins credential 또는 서버의 `.env.deploy`로만 관리합니다.

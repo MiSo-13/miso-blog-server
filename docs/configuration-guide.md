@@ -21,12 +21,6 @@ db:
   username: root
   password: 1234
 
-rabbitmq:
-  host: localhost
-  port: 5672
-  username: guest
-  password: guest
-
 openai:
   api-key: 개인 OpenAI API Key
   admin-key: 조직 비용과 사용량 조회용 OpenAI Admin API Key
@@ -71,10 +65,6 @@ GitHub Pages 발행을 사용하려면 `github.token`에 대상 저장소 `Conte
 | `DB_URL` | MySQL JDBC URL |
 | `DB_USERNAME` | MySQL 계정 |
 | `DB_PASSWORD` | MySQL 비밀번호 |
-| `RABBITMQ_HOST` | RabbitMQ host |
-| `RABBITMQ_PORT` | RabbitMQ port |
-| `RABBITMQ_USERNAME` | RabbitMQ 계정 |
-| `RABBITMQ_PASSWORD` | RabbitMQ 비밀번호 |
 | `OPENAI_API_KEY` | OpenAI API Key |
 | `OPENAI_ADMIN_KEY` | OpenAI Admin API Key |
 | `OPENAI_MODEL` | OpenAI 모델 |
@@ -95,11 +85,7 @@ GitHub Pages 발행을 사용하려면 `github.token`에 대상 저장소 `Conte
 
 ## 로컬 인프라
 
-RabbitMQ는 Docker Compose로 실행합니다.
-
-```bash
-docker compose up -d rabbitmq
-```
+현재 필수 인프라는 MySQL입니다. AI 비동기 작업은 RabbitMQ 없이 Spring `@Async`로 서버 내부에서 처리합니다.
 
 MySQL 초기 DB 이름은 `miso-blog`입니다.
 

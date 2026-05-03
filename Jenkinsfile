@@ -33,10 +33,6 @@ MISO_BLOG_NETWORK_NAME=${env.MISO_BLOG_NETWORK_NAME ?: 'miso-blog-network'}
 DB_URL=${env.DB_URL ?: ''}
 DB_USERNAME=${env.DB_USERNAME ?: ''}
 DB_PASSWORD=${env.DB_PASSWORD ?: ''}
-RABBITMQ_USERNAME=${env.RABBITMQ_USERNAME ?: 'guest'}
-RABBITMQ_PASSWORD=${env.RABBITMQ_PASSWORD ?: 'guest'}
-RABBITMQ_PORT=${env.RABBITMQ_PORT ?: '5673'}
-RABBITMQ_MANAGEMENT_PORT=${env.RABBITMQ_MANAGEMENT_PORT ?: '15673'}
 OPENAI_API_KEY=${env.OPENAI_API_KEY ?: ''}
 OPENAI_ADMIN_KEY=${env.OPENAI_ADMIN_KEY ?: ''}
 OPENAI_MODEL=${env.OPENAI_MODEL ?: 'gpt-4.1-mini'}
@@ -65,15 +61,9 @@ MISO_BLOG_JAVA_OPTS=${env.MISO_BLOG_JAVA_OPTS ?: '-Xms256m -Xmx512m'}
                     String composeBaseCommand = "docker compose --env-file ${env.DEPLOY_ENV_FILE} -f ${env.COMPOSE_FILE_PATH}"
 
                     if (isUnix()) {
-                        sh """
-${composeBaseCommand} up -d miso-blog-rabbitmq
-${composeBaseCommand} up -d --build --remove-orphans miso-blog-server
-"""
+                        sh "${composeBaseCommand} up -d --build --remove-orphans miso-blog-server"
                     } else {
-                        bat """
-${composeBaseCommand} up -d miso-blog-rabbitmq
-${composeBaseCommand} up -d --build --remove-orphans miso-blog-server
-"""
+                        bat "${composeBaseCommand} up -d --build --remove-orphans miso-blog-server"
                     }
                 }
             }

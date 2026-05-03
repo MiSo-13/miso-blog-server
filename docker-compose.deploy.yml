@@ -1,41 +1,15 @@
 services:
-  miso-blog-rabbitmq:
-    image: rabbitmq:3.13-management
-    restart: unless-stopped
-    ports:
-      - "${RABBITMQ_PORT:-5673}:5672"
-      - "${RABBITMQ_MANAGEMENT_PORT:-15673}:15672"
-    environment:
-      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USERNAME:-guest}
-      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-guest}
-    healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-    volumes:
-      - miso-blog-rabbitmq-data:/var/lib/rabbitmq
-    networks:
-      - miso-blog-network
-
   miso-blog-server:
     build:
       context: .
       dockerfile: Dockerfile
     restart: unless-stopped
-    depends_on:
-      miso-blog-rabbitmq:
-        condition: service_healthy
     environment:
       SPRING_PROFILES_ACTIVE: prod
       SERVER_PORT: 8010
       DB_URL: ${DB_URL}
       DB_USERNAME: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
-      RABBITMQ_HOST: miso-blog-rabbitmq
-      RABBITMQ_PORT: 5672
-      RABBITMQ_USERNAME: ${RABBITMQ_USERNAME:-guest}
-      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-guest}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       OPENAI_ADMIN_KEY: ${OPENAI_ADMIN_KEY:-}
       OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4.1-mini}
@@ -59,9 +33,6 @@ services:
       - "host.docker.internal:host-gateway"
     networks:
       - miso-blog-network
-
-volumes:
-  miso-blog-rabbitmq-data:
 
 networks:
   miso-blog-network:

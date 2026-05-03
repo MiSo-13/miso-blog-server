@@ -9,7 +9,6 @@ Miso Blog Server는 Git 저장소의 코드 변경, 기술 이슈, 장애 해결
 - Spring Boot 3.5.10
 - Gradle
 - Spring Web / JPA / Validation / Security
-- RabbitMQ
 - MySQL
 - OpenAI
 - Springdoc OpenAPI
@@ -18,7 +17,7 @@ Miso Blog Server는 Git 저장소의 코드 변경, 기술 이슈, 장애 해결
 
 ### 1. 개인 설정 파일 생성
 
-`src/main/resources/application-private.yml.example` 파일을 `application-private.yml`로 복사한 뒤 로컬 DB, RabbitMQ, OpenAI, GitHub 값을 입력합니다.
+`src/main/resources/application-private.yml.example` 파일을 `application-private.yml`로 복사한 뒤 로컬 DB, OpenAI, GitHub 값을 입력합니다.
 
 `application-private.yml`은 git에 올라가지 않도록 `.gitignore`에 등록되어 있습니다.
 
@@ -28,13 +27,7 @@ Miso Blog Server는 Git 저장소의 코드 변경, 기술 이슈, 장애 해결
 CREATE DATABASE `miso-blog` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
 
-### 3. RabbitMQ 실행
-
-```bash
-docker compose up -d rabbitmq
-```
-
-### 4. 서버 실행
+### 3. 서버 실행
 
 ```bash
 ./gradlew bootRun
@@ -46,9 +39,9 @@ Windows PowerShell에서는 다음 명령을 사용할 수 있습니다.
 .\gradlew.bat bootRun
 ```
 
-### 5. Docker 배포
+### 4. Docker 배포
 
-MAGI 서버와 포트가 겹치지 않도록 배포 기본값은 서버 `8010`, RabbitMQ `5673`, RabbitMQ UI `15673`을 사용합니다.
+MAGI 서버와 포트가 겹치지 않도록 배포 기본값은 서버 `8010`을 사용합니다.
 
 ```powershell
 Copy-Item deploy.env.example .env.deploy
@@ -62,7 +55,6 @@ docker compose --env-file .env.deploy -f docker-compose.deploy.yml up -d --build
 - Health Check: `http://localhost:8010/api/system/health`
 - Swagger UI: `http://localhost:8010/swagger-ui/index.html`
 - OpenAPI JSON: `http://localhost:8010/v3/api-docs`
-- RabbitMQ UI: `http://localhost:15672`
 
 ## OpenAI 운영 API
 
