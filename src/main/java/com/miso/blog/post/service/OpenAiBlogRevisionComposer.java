@@ -15,6 +15,8 @@ import com.miso.blog.post.code.GeneralBlogLength;
 import com.miso.blog.post.dto.GeneratedBlogDraft;
 import com.miso.blog.post.dto.ReviseBlogPostWithAiRequest;
 import com.miso.blog.post.entity.BlogPostEntity;
+import com.miso.blog.reference.code.BlogReferenceType;
+import com.miso.blog.reference.service.BlogReferenceContextService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -40,6 +42,7 @@ public class OpenAiBlogRevisionComposer {
     private final OpenAiCostEstimator openAiCostEstimator;
     private final SecretMaskingService secretMaskingService;
     private final BlogPostMemoryContextService blogPostMemoryContextService;
+    private final BlogReferenceContextService blogReferenceContextService;
     private final HttpClient httpClient = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(10))
             .build();
@@ -160,7 +163,9 @@ public class OpenAiBlogRevisionComposer {
                 secretMaskingService.mask(valueOrDefault(request.additionalMemo(), "(없음)")),
                 valueOrDefault(request.tone(), "(기존 글 톤 유지)"),
                 request.targetLength() == null ? GeneralBlogLength.MEDIUM : request.targetLength(),
-                blogPostMemoryContextService.buildRecentPostContext(blogPost.getId()),
+                blogPostMemoryContextService.buildRecentPostContext(blogPost.getId())
+                        + "\n\nReference URLs:\n"
+                        + blogReferenceContextService.buildReferenceContext(BlogReferenceType.DEVELOPMENT, BlogReferenceType.GENERAL),
                 secretMaskingService.mask(blogPost.getContentMarkdown())
         );
     }

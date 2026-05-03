@@ -14,6 +14,8 @@ import com.miso.blog.common.security.SecretMaskingService;
 import com.miso.blog.post.dto.BlogPostQualityReviewRequest;
 import com.miso.blog.post.dto.BlogPostQualityReviewResponse;
 import com.miso.blog.post.entity.BlogPostEntity;
+import com.miso.blog.reference.code.BlogReferenceType;
+import com.miso.blog.reference.service.BlogReferenceContextService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -39,6 +41,7 @@ public class OpenAiBlogQualityReviewer {
     private final OpenAiCostEstimator openAiCostEstimator;
     private final SecretMaskingService secretMaskingService;
     private final BlogPostMemoryContextService blogPostMemoryContextService;
+    private final BlogReferenceContextService blogReferenceContextService;
     private final HttpClient httpClient = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(10))
             .build();
@@ -172,7 +175,9 @@ public class OpenAiBlogQualityReviewer {
                 valueOrDefault(request == null ? null : request.targetReader(), "(지정 없음)"),
                 valueOrDefault(request == null ? null : request.monetizationGoal(), "검색 유입과 장기 수익화"),
                 secretMaskingService.mask(valueOrDefault(request == null ? null : request.originalInputMemo(), "(없음)")),
-                blogPostMemoryContextService.buildRecentPostContext(blogPost.getId()),
+                blogPostMemoryContextService.buildRecentPostContext(blogPost.getId())
+                        + "\n\nReference URLs:\n"
+                        + blogReferenceContextService.buildReferenceContext(BlogReferenceType.DEVELOPMENT, BlogReferenceType.GENERAL),
                 secretMaskingService.mask(blogPost.getContentMarkdown())
         );
     }

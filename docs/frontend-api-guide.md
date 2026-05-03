@@ -887,3 +887,92 @@ GET /api/admin/openai/estimate?model=gpt-4.1-mini&inputTokens=10000&cachedInputT
 - 추가 요청 입력창은 `revise/ai`를 호출하고, 결과를 다시 미리보기/편집 화면에 반영합니다.
 - 글감 후보는 `sourceFiles`를 함께 보여줘야 사용자가 “내가 실제로 구현한 내용”인지 빠르게 확인할 수 있습니다.
 - 발행 설정 화면은 GitHub Pages 카드와 Velog 카드로 나누고, GitHub Pages를 기본 발행 대상으로 강조하면 됩니다.
+
+## 레퍼런스 URL 관리
+
+개발 블로그와 일반 블로그에서 계속 참고할 외부 URL을 저장해두는 기능입니다. 개발 블로그는 공식 문서, 장애 리포트, 라이브러리 레퍼런스, GitHub 이슈 링크를 저장할 수 있고, 일반 블로그는 식당 공식 페이지, 지도 링크, 메뉴판, 예약 페이지, 참고한 기사나 리뷰 링크를 저장할 수 있습니다.
+
+저장된 레퍼런스 URL은 다음 AI 작업에 자동으로 포함됩니다.
+
+- 일반 블로그 AI 초안 생성: `GENERAL` 레퍼런스 참고
+- 개발 블로그 AI 초안 생성: `DEVELOPMENT` 레퍼런스 참고
+- AI 추가 수정: `GENERAL`, `DEVELOPMENT` 레퍼런스 모두 참고
+- AI 품질 리뷰/자동 개선: `GENERAL`, `DEVELOPMENT` 레퍼런스 모두 참고
+
+서버가 URL 본문을 직접 크롤링하지는 않습니다. AI에는 사용자가 저장한 `title`, `url`, `description`, `tags`만 전달됩니다. 프론트에서는 URL만 넣기보다 “왜 참고해야 하는지”를 `description`에 짧게 적게 해주는 UI가 좋습니다.
+
+### 레퍼런스 타입
+
+| 값 | 용도 |
+| --- | --- |
+| `DEVELOPMENT` | 개발 블로그용 공식 문서, 기술 글, GitHub 이슈, 장애 분석 링크 |
+| `GENERAL` | 맛집/식당/카페/여행/제품 리뷰 등 일반 블로그용 링크 |
+
+### 레퍼런스 URL 추가
+
+```http
+POST /api/blog-reference-urls
+```
+
+```json
+{
+  "type": "DEVELOPMENT",
+  "title": "Spring Boot Reference Documentation",
+  "url": "https://docs.spring.io/spring-boot/index.html",
+  "description": "Spring Boot 설정과 운영 옵션을 설명할 때 참고할 공식 문서",
+  "tags": ["Spring Boot", "공식문서", "설정"],
+  "active": true
+}
+```
+
+일반 블로그 예시:
+
+```json
+{
+  "type": "GENERAL",
+  "title": "네이버 지도 매장 페이지",
+  "url": "https://map.naver.com/example",
+  "description": "위치와 영업시간 확인용. 실제 방문 후기는 사용자가 입력한 메모를 우선한다.",
+  "tags": ["맛집", "지도", "영업시간"],
+  "active": true
+}
+```
+
+### 레퍼런스 URL 목록 조회
+
+```http
+GET /api/blog-reference-urls
+GET /api/blog-reference-urls?type=DEVELOPMENT
+GET /api/blog-reference-urls?type=GENERAL
+```
+
+프론트 권장 UI:
+
+- 타입 탭: `개발`, `일반`
+- 검색/필터: 제목, 태그, 활성 여부
+- 활성 토글: AI 참고 여부를 빠르게 켜고 끄기
+- 설명 입력란: AI가 URL을 어떻게 참고해야 하는지 적는 메모
+
+### 레퍼런스 URL 수정
+
+```http
+PATCH /api/blog-reference-urls/{referenceUrlId}
+```
+
+요청 body는 부분 수정 방식입니다. 바꾸고 싶은 필드만 보내면 됩니다.
+
+```json
+{
+  "description": "Spring Boot 3.x 설정 예시를 설명할 때만 참고",
+  "tags": ["Spring Boot", "3.x", "공식문서"],
+  "active": false
+}
+```
+
+### 레퍼런스 URL 삭제
+
+```http
+DELETE /api/blog-reference-urls/{referenceUrlId}
+```
+
+삭제하면 이후 AI 작업에서 더 이상 참고하지 않습니다. 단순히 잠시 빼고 싶다면 삭제보다 `active=false` 수정을 권장합니다.

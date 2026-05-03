@@ -14,6 +14,8 @@ import com.miso.blog.common.security.SecretMaskingService;
 import com.miso.blog.git.dto.TopicCandidateResponse;
 import com.miso.blog.post.dto.CreateBlogPostFromAnalysisRequest;
 import com.miso.blog.post.dto.GeneratedBlogDraft;
+import com.miso.blog.reference.code.BlogReferenceType;
+import com.miso.blog.reference.service.BlogReferenceContextService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -39,6 +41,7 @@ public class OpenAiBlogDraftComposer {
     private final OpenAiCostEstimator openAiCostEstimator;
     private final SecretMaskingService secretMaskingService;
     private final BlogPostMemoryContextService blogPostMemoryContextService;
+    private final BlogReferenceContextService blogReferenceContextService;
     private final HttpClient httpClient = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(10))
             .build();
@@ -165,7 +168,9 @@ public class OpenAiBlogDraftComposer {
                 request.audience() == null || request.audience().isBlank() ? "비슷한 문제를 겪는 백엔드/풀스택 개발자" : request.audience(),
                 analysisSummary == null ? "(없음)" : analysisSummary,
                 writeJsonQuietly(topicCandidates),
-                blogPostMemoryContextService.buildRecentPostContext(null),
+                blogPostMemoryContextService.buildRecentPostContext(null)
+                        + "\n\nReference URLs:\n"
+                        + blogReferenceContextService.buildReferenceContext(BlogReferenceType.DEVELOPMENT),
                 sourceSummary == null ? "(없음)" : sourceSummary
         );
     }
