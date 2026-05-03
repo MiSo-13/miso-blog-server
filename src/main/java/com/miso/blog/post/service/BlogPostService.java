@@ -30,6 +30,9 @@ import java.util.Locale;
 @RequiredArgsConstructor
 public class BlogPostService {
     private static final DateTimeFormatter SLUG_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
+    private static final int TITLE_MAX_LENGTH = 200;
+    private static final int SLUG_MAX_LENGTH = 220;
+    private static final int SUMMARY_MAX_LENGTH = 1000;
 
     private final BlogPostRepository blogPostRepository;
     private final BlogPostVersionRepository blogPostVersionRepository;
@@ -37,13 +40,14 @@ public class BlogPostService {
 
     @Transactional
     public BlogPostResponse createDraft(CreateBlogPostRequest request) {
-        String slug = resolveSlug(request.slug(), request.title(), null);
+        String title = normalizeRequiredText(request.title(), "제목이 필요합니다.", TITLE_MAX_LENGTH);
+        String slug = resolveSlug(request.slug(), title, null);
         String tagsJson = writeTags(request.tags());
 
         BlogPostEntity blogPost = blogPostRepository.save(BlogPostEntity.builder()
-                .title(request.title().trim())
+                .title(title)
                 .slug(slug)
-                .summary(trimToNull(request.summary()))
+                .summary(truncate(trimToNull(request.summary()), SUMMARY_MAX_LENGTH))
                 .contentMarkdown(request.contentMarkdown())
                 .tagsJson(tagsJson)
                 .sourceNote(trimToNull(request.sourceNote()))
@@ -93,11 +97,12 @@ public class BlogPostService {
             throw new GeneralException(ErrorCode.CONFLICT, "발행된 글은 초안 수정 API로 수정할 수 없습니다.");
         }
 
-        String slug = resolveSlug(request.slug(), request.title(), blogPost.getId());
+        String title = normalizeRequiredText(request.title(), "제목이 필요합니다.", TITLE_MAX_LENGTH);
+        String slug = resolveSlug(request.slug(), title, blogPost.getId());
         blogPost.updateDraft(
-                request.title().trim(),
+                title,
                 slug,
-                trimToNull(request.summary()),
+                truncate(trimToNull(request.summary()), SUMMARY_MAX_LENGTH),
                 request.contentMarkdown(),
                 writeTags(request.tags()),
                 trimToNull(request.sourceNote())
@@ -182,7 +187,10 @@ public class BlogPostService {
         String normalized = Normalizer.normalize(rawValue.trim().toLowerCase(Locale.ROOT), Normalizer.Form.NFKD)
                 .replaceAll("[^a-z0-9가-힣]+", "-")
                 .replaceAll("(^-+|-+$)", "");
-        return normalized.isBlank() ? null : normalized;
+        if (normalized.isBlank()) {
+            return null;
+        }
+        return truncateSlug(normalized);
     }
 
     private String writeTags(List<String> tags) {
@@ -208,5 +216,29 @@ public class BlogPostService {
             return null;
         }
         return value.trim();
+    }
+
+    private String normalizeRequiredText(String value, String errorMessage, int maxLength) {
+        String normalized = trimToNull(value);
+        if (normalized == null) {
+            throw new GeneralException(ErrorCode.BAD_REQUEST, errorMessage);
+        }
+        return truncate(normalized, maxLength);
+    }
+
+    private String truncate(String value, int maxLength) {
+        if (value == null || value.length() <= maxLength) {
+            return value;
+        }
+        return value.substring(0, maxLength);
+    }
+
+    private String truncateSlug(String value) {
+        if (value.length() <= SLUG_MAX_LENGTH) {
+            return value;
+        }
+        String truncated = value.substring(0, SLUG_MAX_LENGTH)
+                .replaceAll("-+$", "");
+        return truncated.isBlank() ? null : truncated;
     }
 }
