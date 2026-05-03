@@ -4,6 +4,7 @@ import com.miso.blog.common.api.ApiDataResponse;
 import com.miso.blog.localrepo.dto.AnalyzeLocalRepositoryRequest;
 import com.miso.blog.localrepo.dto.CreateLocalRepositoryRequest;
 import com.miso.blog.localrepo.dto.LocalRepositoryAnalysisReportResponse;
+import com.miso.blog.localrepo.dto.LocalRepositoryDefaultResponse;
 import com.miso.blog.localrepo.dto.LocalRepositoryResponse;
 import com.miso.blog.localrepo.dto.UpdateLocalRepositoryRequest;
 import com.miso.blog.localrepo.service.LocalRepositoryAnalysisService;
@@ -40,6 +41,12 @@ public class LocalRepositoryController {
     @Operation(summary = "로컬 Git 저장소 목록 조회")
     public ApiDataResponse<List<LocalRepositoryResponse>> getRepositories() {
         return ApiDataResponse.ok(localRepositoryAnalysisService.getRepositories());
+    }
+
+    @GetMapping("/defaults")
+    @Operation(summary = "application-private 로컬 Git 저장소 후보 조회")
+    public ApiDataResponse<List<LocalRepositoryDefaultResponse>> getDefaultRepositories() {
+        return ApiDataResponse.ok(localRepositoryAnalysisService.getDefaultRepositories());
     }
 
     @GetMapping("/{repositoryId}")

@@ -30,3 +30,13 @@ github:
   pages-content-root-path: _posts
   pages-base-url:
   pages-custom-domain:
+
+blog:
+  local-repositories:
+    defaults:
+      # 프론트에서 바로 선택할 수 있는 로컬 Git 저장소 후보입니다.
+      - name: magi-platform
+        local-path: C:\pjt\magi-platform
+        default-branch: main
+        description: MAGI 참고 프로젝트
+        active: true

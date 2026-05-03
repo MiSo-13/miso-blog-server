@@ -40,6 +40,8 @@ blog:
     pages-content-root-path: ${GITHUB_PAGES_CONTENT_ROOT_PATH:${github.pages-content-root-path:_posts}}
     pages-base-url: ${GITHUB_PAGES_BASE_URL:${github.pages-base-url:}}
     pages-custom-domain: ${GITHUB_PAGES_CUSTOM_DOMAIN:${github.pages-custom-domain:}}
+  local-repositories:
+    defaults: []
   publish:
     base-url: ${BLOG_PUBLIC_BASE_URL:http://localhost:8010}
   media:

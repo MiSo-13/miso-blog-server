@@ -9,11 +9,13 @@ import com.miso.blog.git.code.GitAnalysisStatus;
 import com.miso.blog.git.dto.OpenAiGitAnalysisResult;
 import com.miso.blog.git.service.OpenAiGitAnalysisClient;
 import com.miso.blog.localrepo.code.LocalRepositoryAnalysisMode;
+import com.miso.blog.localrepo.config.LocalRepositoryDefaultsProperties;
 import com.miso.blog.localrepo.dto.AnalyzeLocalRepositoryRequest;
 import com.miso.blog.localrepo.dto.CreateLocalRepositoryRequest;
 import com.miso.blog.localrepo.dto.LocalGitSnapshot;
 import com.miso.blog.localrepo.dto.LocalOnlyAnalysisResult;
 import com.miso.blog.localrepo.dto.LocalRepositoryAnalysisReportResponse;
+import com.miso.blog.localrepo.dto.LocalRepositoryDefaultResponse;
 import com.miso.blog.localrepo.dto.LocalRepositoryResponse;
 import com.miso.blog.localrepo.dto.UpdateLocalRepositoryRequest;
 import com.miso.blog.localrepo.entity.LocalRepositoryAnalysisReportEntity;
@@ -32,6 +34,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.nio.file.Path;
 import java.util.List;
 
 @Service
@@ -48,6 +51,7 @@ public class LocalRepositoryAnalysisService {
     private final LocalBlogDraftComposer localBlogDraftComposer;
     private final OpenAiBlogDraftComposer openAiBlogDraftComposer;
     private final SecretMaskingService secretMaskingService;
+    private final LocalRepositoryDefaultsProperties localRepositoryDefaultsProperties;
     private final ObjectMapper objectMapper;
 
     @Transactional
@@ -72,6 +76,18 @@ public class LocalRepositoryAnalysisService {
         return localRepositoryRepository.findAllByOrderByIdDesc()
                 .stream()
                 .map(LocalRepositoryResponse::from)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<LocalRepositoryDefaultResponse> getDefaultRepositories() {
+        List<LocalRepositoryDefaultsProperties.DefaultRepository> defaults = localRepositoryDefaultsProperties.getDefaults();
+        if (defaults == null) {
+            return List.of();
+        }
+        return defaults
+                .stream()
+                .map(this::toDefaultResponse)
                 .toList();
     }
 
@@ -274,6 +290,50 @@ public class LocalRepositoryAnalysisService {
     private LocalRepositoryEntity getRepositoryOrThrow(Long repositoryId) {
         return localRepositoryRepository.findById(repositoryId)
                 .orElseThrow(() -> new GeneralException(ErrorCode.NOT_FOUND, "로컬 저장소를 찾을 수 없습니다."));
+    }
+
+    private LocalRepositoryDefaultResponse toDefaultResponse(LocalRepositoryDefaultsProperties.DefaultRepository defaultRepository) {
+        String configuredPath = trimToNull(defaultRepository.getLocalPath());
+        if (configuredPath == null) {
+            return new LocalRepositoryDefaultResponse(
+                    defaultText(defaultRepository.getName(), "local-repository"),
+                    null,
+                    null,
+                    defaultText(defaultRepository.getDefaultBranch(), "main"),
+                    trimToNull(defaultRepository.getDescription()),
+                    defaultRepository.getActive() == null || defaultRepository.getActive(),
+                    false,
+                    false,
+                    "localPath가 설정되지 않았습니다."
+            );
+        }
+
+        try {
+            String normalizedPath = localGitRepositoryScanner.normalizeRepositoryPath(configuredPath);
+            return new LocalRepositoryDefaultResponse(
+                    defaultText(defaultRepository.getName(), Path.of(normalizedPath).getFileName().toString()),
+                    configuredPath,
+                    normalizedPath,
+                    defaultText(defaultRepository.getDefaultBranch(), "main"),
+                    trimToNull(defaultRepository.getDescription()),
+                    defaultRepository.getActive() == null || defaultRepository.getActive(),
+                    true,
+                    localRepositoryRepository.existsByLocalPath(normalizedPath),
+                    "읽을 수 있는 로컬 Git 저장소입니다."
+            );
+        } catch (GeneralException exception) {
+            return new LocalRepositoryDefaultResponse(
+                    defaultText(defaultRepository.getName(), "local-repository"),
+                    configuredPath,
+                    null,
+                    defaultText(defaultRepository.getDefaultBranch(), "main"),
+                    trimToNull(defaultRepository.getDescription()),
+                    defaultRepository.getActive() == null || defaultRepository.getActive(),
+                    false,
+                    false,
+                    exception.getMessage()
+            );
+        }
     }
 
     private LocalRepositoryAnalysisReportEntity getReportOrThrow(Long reportId) {
