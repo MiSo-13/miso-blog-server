@@ -285,6 +285,7 @@ GET /api/blog-posts
 GET /api/blog-posts/{blogPostId}
 GET /api/blog-posts/{blogPostId}/versions
 PATCH /api/blog-posts/{blogPostId}
+POST /api/blog-posts/{blogPostId}/revise/ai
 POST /api/blog-posts/{blogPostId}/review-ready
 POST /api/blog-posts/{blogPostId}/approve
 POST /api/blog-posts/{blogPostId}/publish
@@ -297,6 +298,33 @@ POST /api/blog-posts/{blogPostId}/export/velog
 ```text
 DRAFT -> REVIEW_READY -> APPROVED -> PUBLISHED
 ```
+
+### AI 결과 편집/추가 요청
+
+개발 블로그 분석 결과나 일반 블로그 AI 생성 결과를 프론트에서 보여준 뒤, 사용자는 두 가지 방식으로 다듬을 수 있습니다.
+
+- 직접 편집: `PATCH /api/blog-posts/{blogPostId}`
+- 추가 요청으로 AI 재작성: `POST /api/blog-posts/{blogPostId}/revise/ai`
+
+```http
+POST /api/blog-posts/{blogPostId}/revise/ai
+```
+
+```json
+{
+  "revisionInstruction": "도입부를 더 자연스럽게 바꾸고, 실제 방문 후기 느낌을 살려줘. 가격 이야기는 과장하지 말아줘.",
+  "additionalMemo": "주말 저녁이라 사람이 조금 있었지만 대화하기 불편할 정도는 아니었음.",
+  "tone": "친근하고 담백한 후기체",
+  "targetLength": "LONG",
+  "preserveTitle": false,
+  "preserveTags": true,
+  "markReviewReady": true
+}
+```
+
+응답은 수정된 `BlogPostResponse`입니다. 서버는 기존 글을 새 버전으로 저장하므로 `GET /api/blog-posts/{blogPostId}/versions`에서 이전 초안과 AI 수정본을 비교할 수 있습니다.
+
+발행된 글은 AI 수정으로 덮어쓸 수 없습니다. 발행 후 수정이 필요하면 새 글 또는 별도 수정 발행 정책을 두는 것이 안전합니다.
 
 ### GitHub Pages 발행
 
@@ -414,5 +442,7 @@ GET /api/admin/openai/estimate?model=gpt-4.1-mini&inputTokens=10000&cachedInputT
 - `OPENAI` 분석은 “마스킹된 코드 요약이 외부 AI로 전송됩니다” 확인 후 실행하게 만듭니다.
 - 분석 결과 화면은 키워드, 글감 후보 카드, 추천 초안 Markdown 미리보기로 나누면 좋습니다.
 - 사용자가 키워드와 글감 후보를 선택하면 `write-blog-post`를 호출해 실제 블로그 초안을 생성합니다.
+- AI가 만든 초안 화면에는 Markdown 직접 편집 영역과 추가 요청 입력창을 함께 둡니다.
+- 추가 요청 입력창은 `revise/ai`를 호출하고, 결과를 다시 미리보기/편집 화면에 반영합니다.
 - 글감 후보는 `sourceFiles`를 함께 보여줘야 사용자가 “내가 실제로 구현한 내용”인지 빠르게 확인할 수 있습니다.
 - 발행 설정 화면은 GitHub Pages 카드와 Velog 카드로 나누고, GitHub Pages를 기본 발행 대상으로 강조하면 됩니다.

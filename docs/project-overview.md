@@ -24,8 +24,9 @@ Miso Blog Server는 사용자의 Git 저장소에서 실제 구현 기록을 읽
 5. 사용자가 키워드와 글감 후보를 선택합니다.
 6. 선택한 키워드와 작성 초점을 바탕으로 좋은 블로그 초안을 생성합니다.
 7. 분석 결과를 블로그 초안으로 전환합니다.
-8. 승인된 글을 GitHub Pages 저장소의 `_posts` 경로에 Markdown 파일로 commit합니다.
-9. 필요하면 Velog 노출용 Markdown을 export해 재발행을 보조합니다.
+8. 사용자가 초안을 직접 편집하거나 추가 요청으로 AI 재작성을 수행합니다.
+9. 승인된 글을 GitHub Pages 저장소의 `_posts` 경로에 Markdown 파일로 commit합니다.
+10. 필요하면 Velog 노출용 Markdown을 export해 재발행을 보조합니다.
 
 ## 일반 블로그 작성 시나리오
 
@@ -33,7 +34,8 @@ Miso Blog Server는 사용자의 Git 저장소에서 실제 구현 기록을 읽
 2. 사진 파일이 있으면 먼저 블로그 이미지 업로드 API로 저장하고, 반환된 public URL을 글 작성 요청에 포함합니다.
 3. 서버가 입력값을 OpenAI에 전달해 자연스러운 Markdown 초안을 생성합니다.
 4. 생성된 글은 기존 `BlogPost` 초안으로 저장됩니다.
-5. 이후 검수, 승인, GitHub Pages 발행, Velog export 흐름을 동일하게 사용합니다.
+5. 사용자가 초안을 직접 편집하거나 추가 요청으로 AI 재작성을 수행합니다.
+6. 이후 검수, 승인, GitHub Pages 발행, Velog export 흐름을 동일하게 사용합니다.
 
 ## Private Repo 처리 원칙
 
@@ -79,6 +81,7 @@ Miso Blog Server는 사용자의 Git 저장소에서 실제 구현 기록을 읽
 - 분석 결과를 블로그 초안으로 전환
 - 맛집/카페/여행 등 일반 블로그 AI 초안 작성
 - 블로그 이미지 업로드/조회와 정적 서빙
+- AI 추가 요청 기반 블로그 초안 재작성
 - 블로그 글 검수/승인/발행 상태 관리
 - GitHub Pages/Velog 발행 대상 관리
 - GitHub Pages Markdown commit 발행
