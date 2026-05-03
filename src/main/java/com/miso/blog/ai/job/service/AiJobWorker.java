@@ -5,6 +5,9 @@ import com.miso.blog.post.dto.BlogPostQualityImproveRequest;
 import com.miso.blog.post.dto.BlogPostQualityImproveResponse;
 import com.miso.blog.post.dto.CreateGeneralBlogPostRequest;
 import com.miso.blog.post.dto.ReviseBlogPostWithAiRequest;
+import com.miso.blog.git.dto.AnalyzeGitRepositoryRequest;
+import com.miso.blog.git.dto.GitAnalysisReportResponse;
+import com.miso.blog.git.service.GitRepositoryAnalysisService;
 import com.miso.blog.post.service.BlogPostQualityImproveService;
 import com.miso.blog.post.service.BlogPostRevisionService;
 import com.miso.blog.post.service.GeneralBlogPostService;
@@ -17,6 +20,7 @@ import org.springframework.stereotype.Component;
 public class AiJobWorker {
     private final AiJobStateService aiJobStateService;
     private final GeneralBlogPostService generalBlogPostService;
+    private final GitRepositoryAnalysisService gitRepositoryAnalysisService;
     private final BlogPostRevisionService blogPostRevisionService;
     private final BlogPostQualityImproveService blogPostQualityImproveService;
 
@@ -26,6 +30,17 @@ public class AiJobWorker {
         try {
             BlogPostResponse response = generalBlogPostService.createAiDraft(request);
             aiJobStateService.markSucceeded(jobId, response, response.id());
+        } catch (Exception exception) {
+            aiJobStateService.markFailed(jobId, exception);
+        }
+    }
+
+    @Async
+    public void runGitRepositoryAnalysisJob(Long jobId, Long repositoryId, AnalyzeGitRepositoryRequest request) {
+        aiJobStateService.markRunning(jobId);
+        try {
+            GitAnalysisReportResponse response = gitRepositoryAnalysisService.analyze(repositoryId, request);
+            aiJobStateService.markSucceeded(jobId, response, response.createdBlogPostId());
         } catch (Exception exception) {
             aiJobStateService.markFailed(jobId, exception);
         }

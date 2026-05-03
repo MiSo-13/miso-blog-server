@@ -83,6 +83,7 @@ GET /api/blog-posts/{blogPostId}/versions/diff
 
 ```http
 POST /api/ai-jobs/blog-posts/draft/ai-general
+POST /api/ai-jobs/git-repositories/{repositoryId}/analyze
 POST /api/ai-jobs/blog-posts/{blogPostId}/revise/ai
 POST /api/ai-jobs/blog-posts/{blogPostId}/quality-improve/ai
 GET /api/ai-jobs/{jobId}
@@ -104,6 +105,8 @@ POST /api/ai-jobs/{jobId}/retry
 - Rate limit: 잠시 후 다시 시도하거나 요청 길이를 줄여주세요.
 - API key 오류: 관리자에게 OpenAI API key 설정을 확인해달라고 안내하세요.
 - 입력값 오류: 필수 문구, 메모, 제목 힌트 등 사용자가 수정할 수 있는 항목을 강조하세요.
+
+GitHub 저장소 분석은 GitHub API 조회와 OpenAI 분석이 이어지므로 1분 이상 걸릴 수 있습니다. 프록시나 다른 서버를 거쳐 호출하면 동기 API에서 504 Gateway Time-out이 날 수 있으니, 프론트에서는 `POST /api/ai-jobs/git-repositories/{repositoryId}/analyze`를 기본 분석 버튼으로 사용하세요.
 
 ## 개발 블로그 작성 가이드
 

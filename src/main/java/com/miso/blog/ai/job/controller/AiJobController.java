@@ -3,6 +3,7 @@ package com.miso.blog.ai.job.controller;
 import com.miso.blog.ai.job.dto.AiJobResponse;
 import com.miso.blog.ai.job.service.AiJobService;
 import com.miso.blog.common.api.ApiDataResponse;
+import com.miso.blog.git.dto.AnalyzeGitRepositoryRequest;
 import com.miso.blog.post.dto.BlogPostQualityImproveRequest;
 import com.miso.blog.post.dto.CreateGeneralBlogPostRequest;
 import com.miso.blog.post.dto.ReviseBlogPostWithAiRequest;
@@ -30,6 +31,15 @@ public class AiJobController {
     @Operation(summary = "일반 블로그 AI 초안 생성 작업 시작")
     public ApiDataResponse<AiJobResponse> createGeneralBlogDraftJob(@Valid @RequestBody CreateGeneralBlogPostRequest request) {
         return ApiDataResponse.ok(aiJobService.createGeneralBlogDraftJob(request));
+    }
+
+    @PostMapping("/git-repositories/{repositoryId}/analyze")
+    @Operation(summary = "Git 저장소 AI 분석 작업 시작", description = "GitHub 조회와 OpenAI 분석을 비동기로 실행해 프록시 timeout을 피합니다.")
+    public ApiDataResponse<AiJobResponse> createGitRepositoryAnalysisJob(
+            @PathVariable Long repositoryId,
+            @Valid @RequestBody AnalyzeGitRepositoryRequest request
+    ) {
+        return ApiDataResponse.ok(aiJobService.createGitRepositoryAnalysisJob(repositoryId, request));
     }
 
     @PostMapping("/blog-posts/{blogPostId}/revise/ai")

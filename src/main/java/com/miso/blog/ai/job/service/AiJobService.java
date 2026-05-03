@@ -9,6 +9,7 @@ import com.miso.blog.ai.job.entity.AiJobEntity;
 import com.miso.blog.ai.job.repository.AiJobRepository;
 import com.miso.blog.common.code.ErrorCode;
 import com.miso.blog.common.exception.GeneralException;
+import com.miso.blog.git.dto.AnalyzeGitRepositoryRequest;
 import com.miso.blog.post.dto.BlogPostQualityImproveRequest;
 import com.miso.blog.post.dto.CreateGeneralBlogPostRequest;
 import com.miso.blog.post.dto.ReviseBlogPostWithAiRequest;
@@ -34,6 +35,14 @@ public class AiJobService {
     public AiJobResponse createGeneralBlogDraftJob(CreateGeneralBlogPostRequest request) {
         AiJobEntity job = savePendingJob(AiJobType.GENERAL_BLOG_DRAFT, request, 0, null);
         afterCommit(() -> aiJobWorker.runGeneralBlogDraftJob(job.getId(), request));
+        return AiJobResponse.from(job);
+    }
+
+    @Transactional
+    public AiJobResponse createGitRepositoryAnalysisJob(Long repositoryId, AnalyzeGitRepositoryRequest request) {
+        GitRepositoryAnalysisJobRequest jobRequest = new GitRepositoryAnalysisJobRequest(repositoryId, request);
+        AiJobEntity job = savePendingJob(AiJobType.GIT_REPOSITORY_ANALYSIS, jobRequest, 0, null);
+        afterCommit(() -> aiJobWorker.runGitRepositoryAnalysisJob(job.getId(), repositoryId, request));
         return AiJobResponse.from(job);
     }
 
@@ -114,6 +123,10 @@ public class AiJobService {
                     CreateGeneralBlogPostRequest request = readJson(requestJson, CreateGeneralBlogPostRequest.class);
                     aiJobWorker.runGeneralBlogDraftJob(retryJobId, request);
                 }
+                case GIT_REPOSITORY_ANALYSIS -> {
+                    GitRepositoryAnalysisJobRequest jobRequest = readJson(requestJson, GitRepositoryAnalysisJobRequest.class);
+                    aiJobWorker.runGitRepositoryAnalysisJob(retryJobId, jobRequest.repositoryId(), jobRequest.request());
+                }
                 case BLOG_POST_REVISION -> {
                     BlogPostRevisionJobRequest jobRequest = readJson(requestJson, BlogPostRevisionJobRequest.class);
                     aiJobWorker.runBlogPostRevisionJob(retryJobId, jobRequest.blogPostId(), jobRequest.request());
@@ -160,6 +173,12 @@ public class AiJobService {
     private record BlogPostRevisionJobRequest(
             Long blogPostId,
             ReviseBlogPostWithAiRequest request
+    ) {
+    }
+
+    private record GitRepositoryAnalysisJobRequest(
+            Long repositoryId,
+            AnalyzeGitRepositoryRequest request
     ) {
     }
 

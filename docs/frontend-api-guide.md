@@ -52,6 +52,14 @@ POST /api/ai-jobs/blog-posts/draft/ai-general
 
 요청 body는 `POST /api/blog-posts/draft/ai-general`과 같습니다.
 
+### GitHub 저장소 분석 job
+
+```http
+POST /api/ai-jobs/git-repositories/{repositoryId}/analyze
+```
+
+요청 body는 `POST /api/git-repositories/{repositoryId}/analyze`와 같습니다. GitHub commit 조회와 OpenAI 분석은 1분 이상 걸릴 수 있으므로, 프론트에서는 동기 분석 API보다 이 job API를 기본으로 사용하세요.
+
 ### AI 추가 수정 job
 
 ```http
@@ -354,11 +362,21 @@ GET /api/git-repositories
 GET /api/git-repositories/{repositoryId}
 PATCH /api/git-repositories/{repositoryId}
 POST /api/git-repositories/{repositoryId}/analyze
+POST /api/ai-jobs/git-repositories/{repositoryId}/analyze
 GET /api/git-repositories/{repositoryId}/analysis-reports
 GET /api/git-repositories/analysis-reports/{reportId}
 POST /api/git-repositories/analysis-reports/{reportId}/blog-post
 POST /api/git-repositories/analysis-reports/{reportId}/write-blog-post
 ```
+
+프록시나 다른 서버를 거쳐 호출하는 운영 환경에서는 `POST /api/git-repositories/{repositoryId}/analyze` 동기 API가 504 timeout을 만날 수 있습니다. 프론트에서는 아래 비동기 흐름을 사용하세요.
+
+1. `POST /api/ai-jobs/git-repositories/{repositoryId}/analyze`
+2. 응답의 `id`를 jobId로 저장
+3. `GET /api/ai-jobs/{jobId}`를 1~3초 간격으로 polling
+4. `status=SUCCEEDED`이면 `resultJson` 안의 분석 결과를 표시
+5. `resultBlogPostId`가 있으면 글 상세로 이동 가능
+6. `status=FAILED`이면 `failure.message`와 `failure.actionGuide` 표시
 
 ## 블로그 글
 
