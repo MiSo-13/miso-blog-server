@@ -12,27 +12,45 @@ MAGI 서버와 충돌하지 않도록 기본 서버 포트를 분리했습니다
 
 현재 AI job은 Spring `@Async`로 서버 내부에서 실행하므로 RabbitMQ 컨테이너는 배포 구성에서 제외했습니다.
 
+## Private 설정 파일
+
+MAGI와 같은 방식으로 Jenkins 서버의 private 파일을 빌드 전에 프로젝트로 복사합니다.
+
+| 항목 | 경로 |
+| --- | --- |
+| Jenkins 서버 원본 | `/miso-blog/private/application-private.yml` |
+| 빌드 워크스페이스 대상 | `src/main/resources/application-private.yml` |
+
+Jenkinsfile은 배포 시작 시 원본 파일 존재 여부를 확인하고, 빌드 전에 대상 경로로 복사합니다. 배포가 끝나면 워크스페이스에 복사된 private 파일을 삭제합니다.
+
+`application-private.yml`에는 DB, OpenAI, GitHub 같은 민감 설정을 넣습니다.
+
+```yaml
+db:
+  url: jdbc:mysql://host.docker.internal:3306/miso-blog?useSSL=false&allowPublicKeyRetrieval=true&useUnicode=true&serverTimezone=Asia/Seoul
+  username: root
+  password: change-me
+
+openai:
+  api-key:
+  admin-key:
+  model: gpt-4.1-mini
+  budget-limit-usd:
+
+github:
+  token:
+  owner:
+```
+
+서버에 MySQL이 Docker 밖에서 실행 중이면 `host.docker.internal`을 사용합니다. MySQL도 Docker 네트워크 안에 있다면 해당 서비스명으로 바꾸면 됩니다.
+
 ## 배포 환경 파일
 
-`deploy.env.example`을 복사해서 `.env.deploy`로 만들고 값을 채웁니다. `.env.deploy`은 git에 올라가지 않습니다.
+`deploy.env.example`은 포트, 업로드 경로, JVM 옵션처럼 민감하지 않은 배포 옵션만 담습니다. `.env.deploy`은 git에 올라가지 않습니다.
 
 ```powershell
 Copy-Item deploy.env.example .env.deploy
 ```
-
-필수 값:
-
-```env
-DB_URL=jdbc:mysql://host.docker.internal:3306/miso-blog?useSSL=false&allowPublicKeyRetrieval=true&useUnicode=true&serverTimezone=Asia/Seoul
-DB_USERNAME=root
-DB_PASSWORD=change-me
-OPENAI_API_KEY=
-OPENAI_ADMIN_KEY=
-GITHUB_TOKEN=
-GITHUB_OWNER=
-```
-
-서버에 MySQL이 Docker 밖에서 실행 중이면 `host.docker.internal`을 사용합니다. MySQL도 Docker 네트워크 안에 있다면 해당 서비스명으로 바꾸면 됩니다.
 
 ## Docker Compose 배포
 
@@ -71,15 +89,8 @@ blog:
 
 ## Jenkins 배포
 
-`Jenkinsfile`은 MAGI와 비슷하게 `clean build` 후 `.env.deploy`을 임시로 생성하고 Docker Compose로 배포합니다. Jenkins credential이나 환경변수에 다음 값을 넣어두면 됩니다.
+`Jenkinsfile`은 MAGI와 비슷하게 private 설정 파일을 복사한 뒤 `clean build`를 수행하고, `.env.deploy`을 임시로 생성해서 Docker Compose로 배포합니다.
 
-- `DB_URL`
-- `DB_USERNAME`
-- `DB_PASSWORD`
-- `OPENAI_API_KEY`
-- `OPENAI_ADMIN_KEY`
-- `GITHUB_TOKEN`
-- `GITHUB_OWNER`
 - 선택: `MISO_BLOG_PORT`, `BLOG_PUBLIC_BASE_URL`
 
-민감값은 repository에 커밋하지 말고 Jenkins credential 또는 서버의 `.env.deploy`로만 관리합니다.
+민감값은 repository나 `.env.deploy`에 커밋하지 말고 `/miso-blog/private/application-private.yml`에서만 관리합니다.
