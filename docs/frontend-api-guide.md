@@ -141,6 +141,12 @@ POST /api/ai-jobs/{jobId}/retry
 
 기본 추천 흐름입니다. 로컬에 clone된 repo를 서버가 직접 `git log`, `git show`, `git diff`로 읽고, 기본값인 `LOCAL_ONLY` 모드에서는 외부 AI로 코드를 전송하지 않습니다.
 
+중요한 전제:
+
+- `localPath`는 사용자 브라우저의 PC 경로가 아니라 서버가 직접 접근할 수 있는 경로입니다.
+- Docker 배포에서는 Windows의 `C:\...` 경로가 컨테이너 안에 없으므로 직접 등록하면 `로컬 저장소 경로가 디렉터리가 아닙니다.` 오류가 날 수 있습니다.
+- Docker에서는 아래 “GitHub 저장소 선택 및 clone” API로 repo를 컨테이너 내부에 내려받은 뒤 분석하는 흐름을 권장합니다.
+
 ### 로컬 저장소 등록
 
 ```http
@@ -180,6 +186,71 @@ POST /api/local-repositories
   "active": true
 }
 ```
+
+### GitHub 저장소 선택 및 Docker 내부 clone
+
+Docker 배포에서 추천하는 개발 블로그 흐름입니다.
+
+```http
+GET /api/local-repositories/github/repositories
+GET /api/local-repositories/github/branches?repositoryFullName=owner/repo
+POST /api/local-repositories/github/clone
+```
+
+저장소 목록 조회 응답 예시:
+
+```json
+[
+  {
+    "name": "magi-platform",
+    "fullName": "user/magi-platform",
+    "ownerLogin": "user",
+    "defaultBranch": "main",
+    "privateRepository": true,
+    "fork": false,
+    "githubPagesCandidate": false,
+    "htmlUrl": "https://github.com/user/magi-platform",
+    "updatedAt": "2026-05-03T12:00:00Z"
+  }
+]
+```
+
+브랜치 목록 조회 응답 예시:
+
+```json
+[
+  {
+    "name": "main",
+    "commitSha": "abc123",
+    "protectedBranch": false
+  }
+]
+```
+
+clone 요청 예시:
+
+```json
+{
+  "repositoryFullName": "user/magi-platform",
+  "branchName": "main",
+  "name": "magi-platform",
+  "description": "GitHub에서 clone한 개발 블로그 분석 대상",
+  "refreshExisting": true
+}
+```
+
+clone 응답은 `LocalRepositoryResponse`입니다. 프론트는 응답의 `id`를 사용해서 곧바로 분석 API를 호출하면 됩니다.
+
+```http
+POST /api/local-repositories/{repositoryId}/analyze
+```
+
+프론트 권장 UI:
+
+- 저장소 목록에서 `privateRepository=true`를 표시합니다.
+- 저장소 선택 후 branch select를 보여줍니다.
+- 이미 clone된 저장소는 `refreshExisting=true`로 최신화 버튼을 제공하면 좋습니다.
+- clone 실패 시 GitHub token 권한, branch 이름, Docker의 Git 설치 여부를 안내합니다.
 
 ### 로컬 저장소 목록/상세/수정
 

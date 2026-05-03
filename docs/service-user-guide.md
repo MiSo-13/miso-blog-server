@@ -146,6 +146,13 @@ GET /api/local-repositories/defaults
 
 사용자가 후보를 선택하거나 직접 경로를 입력하면 저장소를 등록합니다.
 
+주의할 점:
+
+- 이 API의 `localPath`는 “브라우저를 띄운 사용자 PC 경로”가 아니라 “서버 프로세스가 직접 접근할 수 있는 경로”입니다.
+- 로컬 개발에서 서버를 Windows에서 실행 중이면 `C:\pjt\magi-platform` 같은 경로를 사용할 수 있습니다.
+- Docker 배포에서 서버가 컨테이너 안에서 실행 중이면 `C:\...` 경로는 보이지 않습니다. 이 경우 아래의 “GitHub 저장소 선택 후 Docker 내부 clone” 흐름을 사용하세요.
+- `로컬 저장소 경로가 디렉터리가 아닙니다.` 오류는 서버 기준으로 해당 경로가 없거나 디렉터리가 아니라는 뜻입니다.
+
 ```http
 POST /api/local-repositories
 ```
@@ -171,6 +178,96 @@ POST /api/local-repositories
 | 기본 브랜치 | 아니오 | 비우면 `main` |
 | 설명 | 아니오 | 프로젝트 메모 |
 | 활성화 | 아니오 | 분석 대상 여부 |
+
+### 2-1. GitHub 저장소 선택 후 Docker 내부 clone
+
+Docker 배포 환경에서는 사용자의 PC 경로를 서버가 직접 읽을 수 없습니다. 대신 GitHub token으로 접근 가능한 저장소를 조회하고, 사용자가 선택한 저장소를 컨테이너 내부 clone 전용 경로에 내려받은 뒤 기존 로컬 분석 흐름을 사용합니다.
+
+권장 화면 흐름:
+
+1. GitHub 저장소 목록 조회
+2. 사용자가 분석할 repository 선택
+3. 선택한 repository의 branch 목록 조회
+4. branch 선택
+5. `clone` 실행
+6. 응답으로 받은 `repositoryId`로 로컬 분석 실행
+
+저장소 목록 조회:
+
+```http
+GET /api/local-repositories/github/repositories
+```
+
+응답은 발행 설정의 GitHub 저장소 선택 응답과 같은 형태입니다.
+
+| 필드 | 설명 |
+| --- | --- |
+| `name` | 저장소 이름 |
+| `fullName` | `owner/repo` 형태의 저장소 전체 이름 |
+| `ownerLogin` | 소유자 또는 조직 |
+| `defaultBranch` | 기본 브랜치 |
+| `privateRepository` | private 저장소 여부 |
+| `htmlUrl` | GitHub 웹 URL |
+| `updatedAt` | 최근 수정 시간 |
+
+브랜치 목록 조회:
+
+```http
+GET /api/local-repositories/github/branches?repositoryFullName=owner/repo
+```
+
+clone 및 로컬 분석 대상으로 등록:
+
+```http
+POST /api/local-repositories/github/clone
+```
+
+요청 예시:
+
+```json
+{
+  "repositoryFullName": "owner/magi-platform",
+  "branchName": "main",
+  "name": "magi-platform",
+  "description": "GitHub에서 clone한 개발 블로그 분석 대상",
+  "refreshExisting": true
+}
+```
+
+입력값 안내:
+
+| 입력 | 필수 | 설명 |
+| --- | --- | --- |
+| `repositoryFullName` | 예 | `owner/repo` 형식 |
+| `branchName` | 아니오 | 비우면 기본 clone 동작을 사용합니다. 프론트에서는 선택한 branch를 보내는 것을 권장합니다. |
+| `name` | 아니오 | 화면에 표시할 이름. 비우면 repo 이름을 사용합니다. |
+| `description` | 아니오 | 프로젝트 설명 |
+| `refreshExisting` | 아니오 | 이미 clone되어 있으면 `fetch/pull`로 최신화할지 여부. 기본적으로 최신화합니다. |
+
+clone 성공 후 응답은 일반 로컬 저장소 응답과 같습니다. 이후에는 아래 분석 API를 그대로 호출하면 됩니다.
+
+```http
+POST /api/local-repositories/{repositoryId}/analyze
+```
+
+Docker 기준 기본 clone 경로는 `/app/repositories`입니다. 변경하려면 `application-private.yml` 또는 환경변수에 설정합니다.
+
+```yaml
+blog:
+  local-repositories:
+    clone-base-dir: /app/repositories
+```
+
+```bash
+BLOG_LOCAL_REPOSITORY_CLONE_BASE_DIR=/app/repositories
+```
+
+운영 안내:
+
+- Docker 이미지에는 Git CLI가 포함되어 있어야 합니다. 현재 서버 Dockerfile은 runtime 이미지에 `git`을 설치합니다.
+- private repository clone을 위해 `github.token`이 필요합니다.
+- Fine-grained token을 쓴다면 선택 대상 repository에 Contents 읽기 권한이 필요합니다.
+- clone된 코드는 컨테이너 파일 시스템에 저장됩니다. 컨테이너 재생성 후에도 유지하려면 `/app/repositories`를 Docker volume으로 연결하는 것을 권장합니다.
 
 ### 3. 로컬 저장소 분석
 

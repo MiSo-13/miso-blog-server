@@ -87,6 +87,28 @@ blog:
 
 로컬 개발에서만 실행할 때는 기존처럼 `C:\pjt\magi-platform` 경로를 사용할 수 있습니다.
 
+프론트에서 GitHub 저장소를 선택해 Docker 내부로 clone하는 흐름도 사용할 수 있습니다. 이 경우 clone 결과는 기본적으로 `/data/miso-blog/repositories`에 저장되고, host의 `${MISO_BLOG_REPOSITORIES_ROOT}` 볼륨에 보존됩니다.
+
+```env
+BLOG_LOCAL_REPOSITORY_CLONE_BASE_DIR=/data/miso-blog/repositories
+MISO_BLOG_REPOSITORIES_ROOT=/srv/miso-blog/repositories
+```
+
+Windows 로컬 Docker 배포 예시:
+
+```env
+MISO_BLOG_REPOSITORIES_ROOT=C:/pjt/miso-blog-server/repositories
+```
+
+GitHub clone 흐름:
+
+1. `GET /api/local-repositories/github/repositories`
+2. `GET /api/local-repositories/github/branches?repositoryFullName=owner/repo`
+3. `POST /api/local-repositories/github/clone`
+4. `POST /api/local-repositories/{repositoryId}/analyze`
+
+private repository를 clone하려면 `github.token`이 필요합니다. Docker runtime 이미지에는 Git CLI가 설치되어 있어야 하며, 현재 Dockerfile은 runtime 이미지에 `git`을 설치합니다.
+
 ## Jenkins 배포
 
 `Jenkinsfile`은 MAGI와 비슷하게 private 설정 파일을 복사한 뒤 `clean build`를 수행하고, `.env.deploy`을 임시로 생성해서 Docker Compose로 배포합니다.

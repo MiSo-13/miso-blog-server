@@ -2,14 +2,19 @@ package com.miso.blog.localrepo.controller;
 
 import com.miso.blog.common.api.ApiDataResponse;
 import com.miso.blog.localrepo.dto.AnalyzeLocalRepositoryRequest;
+import com.miso.blog.localrepo.dto.CloneGitHubRepositoryRequest;
 import com.miso.blog.localrepo.dto.CreateLocalRepositoryRequest;
 import com.miso.blog.localrepo.dto.LocalRepositoryAnalysisReportResponse;
 import com.miso.blog.localrepo.dto.LocalRepositoryDefaultResponse;
 import com.miso.blog.localrepo.dto.LocalRepositoryResponse;
 import com.miso.blog.localrepo.dto.UpdateLocalRepositoryRequest;
+import com.miso.blog.localrepo.service.GitHubRepositoryCloneService;
 import com.miso.blog.localrepo.service.LocalRepositoryAnalysisService;
 import com.miso.blog.post.dto.CreateBlogPostFromAnalysisRequest;
 import com.miso.blog.post.dto.BlogPostResponse;
+import com.miso.blog.publish.dto.GitHubBranchOptionResponse;
+import com.miso.blog.publish.dto.GitHubRepositoryOptionResponse;
+import com.miso.blog.publish.service.PublishTargetService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -20,6 +25,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -30,6 +36,8 @@ import java.util.List;
 @Tag(name = "로컬 Git 저장소 분석", description = "로컬에 clone된 Git 저장소를 외부 전송 없이 분석합니다.")
 public class LocalRepositoryController {
     private final LocalRepositoryAnalysisService localRepositoryAnalysisService;
+    private final PublishTargetService publishTargetService;
+    private final GitHubRepositoryCloneService gitHubRepositoryCloneService;
 
     @PostMapping
     @Operation(summary = "로컬 Git 저장소 등록")
@@ -47,6 +55,24 @@ public class LocalRepositoryController {
     @Operation(summary = "application-private 로컬 Git 저장소 후보 조회")
     public ApiDataResponse<List<LocalRepositoryDefaultResponse>> getDefaultRepositories() {
         return ApiDataResponse.ok(localRepositoryAnalysisService.getDefaultRepositories());
+    }
+
+    @GetMapping("/github/repositories")
+    @Operation(summary = "GitHub 분석 대상 저장소 목록 조회", description = "github.owner와 token으로 접근 가능한 저장소를 조회합니다.")
+    public ApiDataResponse<List<GitHubRepositoryOptionResponse>> getGitHubRepositories() {
+        return ApiDataResponse.ok(publishTargetService.getGitHubRepositories());
+    }
+
+    @GetMapping("/github/branches")
+    @Operation(summary = "GitHub 분석 대상 브랜치 목록 조회")
+    public ApiDataResponse<List<GitHubBranchOptionResponse>> getGitHubBranches(@RequestParam String repositoryFullName) {
+        return ApiDataResponse.ok(publishTargetService.getGitHubBranches(repositoryFullName));
+    }
+
+    @PostMapping("/github/clone")
+    @Operation(summary = "GitHub 저장소 clone 후 로컬 분석 대상으로 등록", description = "Docker 내부 clone 경로에 저장소를 내려받고 LOCAL_ONLY 분석에 사용할 수 있게 등록합니다.")
+    public ApiDataResponse<LocalRepositoryResponse> cloneGitHubRepository(@Valid @RequestBody CloneGitHubRepositoryRequest request) {
+        return ApiDataResponse.ok(gitHubRepositoryCloneService.cloneAndRegister(request));
     }
 
     @GetMapping("/{repositoryId}")

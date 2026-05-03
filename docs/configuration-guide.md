@@ -40,6 +40,7 @@ github:
 
 blog:
   local-repositories:
+    clone-base-dir: /app/repositories
     defaults:
       - name: magi-platform
         local-path: C:\pjt\magi-platform
@@ -53,6 +54,8 @@ GitHub Pages 발행을 사용하려면 `github.token`에 대상 저장소 `Conte
 기본 흐름은 `github.token`, `github.owner`만 private에 입력하고, 프론트에서 저장소와 브랜치를 선택하는 방식입니다. 직접 고정하고 싶을 때만 `pages-repository-name` 또는 `pages-repository-full-name`을 입력하세요.
 
 로컬 Git 분석은 서버가 접근 가능한 로컬 경로를 직접 읽습니다. 자주 분석할 프로젝트는 `blog.local-repositories.defaults`에 후보로 적어두면 프론트에서 `GET /api/local-repositories/defaults`로 불러와 선택 UI를 만들 수 있습니다. 이 값도 개인 PC 경로라서 `application-private.yml`에서만 관리하는 것을 권장합니다.
+
+Docker 배포에서는 사용자 PC의 `C:\...` 경로를 컨테이너가 직접 읽을 수 없습니다. GitHub 저장소를 웹에서 선택해 clone하는 흐름을 쓰려면 `blog.local-repositories.clone-base-dir` 또는 `BLOG_LOCAL_REPOSITORY_CLONE_BASE_DIR`을 컨테이너 내부 경로로 설정합니다. 기본 배포 compose는 `/data/miso-blog/repositories`를 사용하고 host volume에 보존합니다.
 
 ## 환경 변수
 
@@ -77,6 +80,7 @@ GitHub Pages 발행을 사용하려면 `github.token`에 대상 저장소 `Conte
 | `GITHUB_PAGES_CONTENT_ROOT_PATH` | 글 파일 저장 경로. 기본값 `_posts` |
 | `GITHUB_PAGES_BASE_URL` | GitHub Pages 공개 URL |
 | `GITHUB_PAGES_CUSTOM_DOMAIN` | 자체 도메인 |
+| `BLOG_LOCAL_REPOSITORY_CLONE_BASE_DIR` | GitHub에서 선택한 분석 대상 repo를 clone할 컨테이너 내부 경로 |
 | `BLOG_MEDIA_UPLOAD_DIR` | 블로그 이미지 저장 경로 |
 | `BLOG_MEDIA_PUBLIC_URL_PREFIX` | 이미지 public URL prefix |
 | `BLOG_MEDIA_MAX_FILE_SIZE` | multipart 파일 크기 제한 |

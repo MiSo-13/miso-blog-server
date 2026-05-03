@@ -27,6 +27,9 @@ github:
 
 blog:
   local-repositories:
+    # Docker 배포에서는 GitHub에서 선택한 저장소가 이 경로 아래로 clone됩니다.
+    # 컨테이너 내부 경로이므로 Windows의 C:\ 경로를 넣지 않습니다.
+    clone-base-dir: /app/repositories
     defaults:
       # 프론트에서 바로 선택할 수 있는 로컬 Git 저장소 후보입니다.
       - name: magi-platform

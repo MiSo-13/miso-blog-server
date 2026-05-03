@@ -5,6 +5,7 @@ src/main/resources/application-private.yml
 .env.deploy
 .env.local
 uploads/
+repositories/
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
 !**/src/test/**/build/
