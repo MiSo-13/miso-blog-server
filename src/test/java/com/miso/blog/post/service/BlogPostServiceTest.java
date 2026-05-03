@@ -1,8 +1,10 @@
 package com.miso.blog.post.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.miso.blog.post.code.BlogPostStatus;
 import com.miso.blog.post.dto.BlogPostResponse;
 import com.miso.blog.post.dto.CreateBlogPostRequest;
+import com.miso.blog.post.dto.UpdateBlogPostStatusRequest;
 import com.miso.blog.post.entity.BlogPostEntity;
 import com.miso.blog.post.entity.BlogPostVersionEntity;
 import com.miso.blog.post.repository.BlogPostRepository;
@@ -10,8 +12,10 @@ import com.miso.blog.post.repository.BlogPostVersionRepository;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -42,5 +46,31 @@ class BlogPostServiceTest {
         assertEquals(200, response.title().length());
         assertEquals(1000, response.summary().length());
         assertTrue(response.slug().length() <= 220);
+    }
+
+    @Test
+    void updateStatusCanMovePublishedPostBackToDraft() {
+        BlogPostRepository blogPostRepository = mock(BlogPostRepository.class);
+        BlogPostVersionRepository versionRepository = mock(BlogPostVersionRepository.class);
+        BlogPostEntity blogPost = BlogPostEntity.builder()
+                .title("Published post")
+                .slug("published-post")
+                .summary("summary")
+                .contentMarkdown("# body")
+                .tagsJson("[]")
+                .status(BlogPostStatus.PUBLISHED)
+                .currentVersionNo(1)
+                .build();
+        blogPost.markPublished();
+
+        when(blogPostRepository.findById(1L)).thenReturn(Optional.of(blogPost));
+        when(versionRepository.save(any(BlogPostVersionEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        BlogPostService service = new BlogPostService(blogPostRepository, versionRepository, new ObjectMapper());
+        BlogPostResponse response = service.updateStatus(1L, new UpdateBlogPostStatusRequest(BlogPostStatus.DRAFT));
+
+        assertEquals(BlogPostStatus.DRAFT, response.status());
+        assertNull(response.approvedAt());
+        assertNull(response.publishedAt());
     }
 }

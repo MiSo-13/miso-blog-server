@@ -11,6 +11,7 @@ import com.miso.blog.post.dto.BlogPostSummaryResponse;
 import com.miso.blog.post.dto.BlogPostVersionResponse;
 import com.miso.blog.post.dto.CreateBlogPostRequest;
 import com.miso.blog.post.dto.UpdateBlogPostRequest;
+import com.miso.blog.post.dto.UpdateBlogPostStatusRequest;
 import com.miso.blog.post.entity.BlogPostEntity;
 import com.miso.blog.post.entity.BlogPostVersionEntity;
 import com.miso.blog.post.repository.BlogPostRepository;
@@ -140,6 +141,19 @@ public class BlogPostService {
 
         blogPost.markPublished();
         saveVersion(blogPost, BlogPostVersionAction.PUBLISHED);
+        return BlogPostResponse.from(blogPost, objectMapper);
+    }
+
+    @Transactional
+    public BlogPostResponse updateStatus(Long blogPostId, UpdateBlogPostStatusRequest request) {
+        BlogPostEntity blogPost = getBlogPostOrThrow(blogPostId);
+        if (blogPost.getStatus() == request.status()) {
+            return BlogPostResponse.from(blogPost, objectMapper);
+        }
+
+        // 발행 후 오탈자 수정이 필요할 때 DRAFT/APPROVED 등으로 되돌릴 수 있게 한다.
+        blogPost.changeStatus(request.status());
+        saveVersion(blogPost, BlogPostVersionAction.STATUS_CHANGED);
         return BlogPostResponse.from(blogPost, objectMapper);
     }
 

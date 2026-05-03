@@ -12,6 +12,7 @@ import com.miso.blog.post.dto.CreateBlogPostRequest;
 import com.miso.blog.post.dto.BlogPostQualityReviewRequest;
 import com.miso.blog.post.dto.BlogPostQualityReviewResponse;
 import com.miso.blog.post.dto.UpdateBlogPostRequest;
+import com.miso.blog.post.dto.UpdateBlogPostStatusRequest;
 import com.miso.blog.post.dto.ReviseBlogPostWithAiRequest;
 import com.miso.blog.post.service.BlogPostService;
 import com.miso.blog.post.service.GeneralBlogPostService;
@@ -146,6 +147,15 @@ public class BlogPostController {
     @Operation(summary = "블로그 글 발행 완료 처리", description = "실제 GitHub Pages 연동 전까지는 상태만 PUBLISHED로 전환합니다.")
     public ApiDataResponse<BlogPostResponse> markPublished(@PathVariable Long blogPostId) {
         return ApiDataResponse.ok(blogPostService.markPublished(blogPostId));
+    }
+
+    @PatchMapping("/{blogPostId}/status")
+    @Operation(summary = "블로그 글 상태 수정", description = "발행 후 수정이 필요할 때 PUBLISHED 상태를 DRAFT 또는 APPROVED 등으로 변경할 수 있습니다.")
+    public ApiDataResponse<BlogPostResponse> updateStatus(
+            @PathVariable Long blogPostId,
+            @Valid @RequestBody UpdateBlogPostStatusRequest request
+    ) {
+        return ApiDataResponse.ok(blogPostService.updateStatus(blogPostId, request));
     }
 
     @PostMapping("/{blogPostId}/publish/github-pages")

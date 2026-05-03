@@ -115,4 +115,22 @@ public class BlogPostEntity extends BaseTimeEntity {
         this.status = BlogPostStatus.PUBLISHED;
         this.publishedAt = LocalDateTime.now();
     }
+
+    public void changeStatus(BlogPostStatus status) {
+        this.status = status;
+        if (status == BlogPostStatus.DRAFT || status == BlogPostStatus.REVIEW_READY) {
+            this.approvedAt = null;
+            this.publishedAt = null;
+            return;
+        }
+        if (status == BlogPostStatus.APPROVED) {
+            this.approvedAt = this.approvedAt == null ? LocalDateTime.now() : this.approvedAt;
+            this.publishedAt = null;
+            return;
+        }
+        if (status == BlogPostStatus.PUBLISHED) {
+            this.approvedAt = this.approvedAt == null ? LocalDateTime.now() : this.approvedAt;
+            this.publishedAt = this.publishedAt == null ? LocalDateTime.now() : this.publishedAt;
+        }
+    }
 }

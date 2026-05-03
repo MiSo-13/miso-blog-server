@@ -1036,3 +1036,36 @@ GitHub 분석과 동일하게 1건 삭제와 전체 삭제를 지원합니다.
 - GitHub/OpenAI 분석에서는 “깊게 분석을 켜면 변경된 코드 일부가 AI 분석 컨텍스트에 포함될 수 있습니다” 안내를 보여주세요.
 - 분석 결과 목록에는 `삭제` 버튼과 `전체 삭제 후 다시 분석` 버튼을 제공합니다.
 - 전체 삭제 후 다시 분석은 `DELETE 전체 삭제 API` 성공 후 기존 분석 요청을 다시 보내는 흐름으로 구현하면 됩니다.
+
+## 발행된 글 상태 되돌리기
+
+발행 완료된 글은 일반 수정 API에서 바로 수정하지 못하도록 막혀 있습니다. 발행 후 오탈자나 본문 수정이 필요하면 먼저 상태를 `DRAFT` 또는 `APPROVED`로 되돌린 뒤 수정합니다.
+
+```http
+PATCH /api/blog-posts/{blogPostId}/status
+```
+
+요청 예시:
+
+```json
+{
+  "status": "DRAFT"
+}
+```
+
+상태 값:
+
+| 값 | 사용 시점 |
+| --- | --- |
+| `DRAFT` | 발행된 글을 다시 편집 가능한 초안으로 되돌릴 때 |
+| `REVIEW_READY` | 수정 후 검토 대기 상태로 둘 때 |
+| `APPROVED` | 수정 없이 다시 발행 가능한 승인 상태로 되돌릴 때 |
+| `PUBLISHED` | 수동으로 발행 완료 상태를 복구할 때 |
+
+권장 흐름:
+
+1. `PUBLISHED` 글에서 수정 버튼 클릭
+2. 프론트에서 “발행된 글입니다. 초안으로 되돌린 뒤 수정할까요?” 확인 모달 표시
+3. `PATCH /api/blog-posts/{blogPostId}/status` with `{ "status": "DRAFT" }`
+4. 성공 후 기존 `PATCH /api/blog-posts/{blogPostId}` 수정 API 호출
+5. 수정 완료 후 필요하면 `review-ready`, `approve`, `publish/github-pages` 흐름을 다시 진행

@@ -6,5 +6,6 @@ public enum BlogPostVersionAction {
     REVIEW_READY,
     APPROVED,
     PUBLISHED,
+    STATUS_CHANGED,
     FAILED
 }
