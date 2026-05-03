@@ -4,7 +4,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.miso.blog.common.code.ErrorCode;
 import com.miso.blog.common.exception.GeneralException;
+import com.miso.blog.publish.dto.GitHubBranchOptionResponse;
 import com.miso.blog.publish.dto.GitHubContentCommitResult;
+import com.miso.blog.publish.dto.GitHubRepositoryOptionResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -22,6 +24,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Locale;
 
 @Component
 @RequiredArgsConstructor
@@ -137,6 +140,92 @@ public class GitHubContentsClient {
         }
     }
 
+    public List<GitHubRepositoryOptionResponse> listRepositories(String ownerLogin) {
+        validateToken();
+        String normalizedOwner = trimToNull(ownerLogin);
+        if (normalizedOwner == null) {
+            throw new GeneralException(ErrorCode.BAD_REQUEST, "github.owner를 먼저 설정하세요.");
+        }
+
+        try {
+            List<GitHubRepositoryOptionResponse> repositories = new ArrayList<>();
+            for (int page = 1; page <= 5; page++) {
+                URI uri = URI.create(GITHUB_API_BASE_URL
+                        + "/user/repos?per_page=100&page=" + page
+                        + "&affiliation=owner,collaborator,organization_member&sort=updated");
+                JsonNode root = getJson(uri);
+                if (!root.isArray() || root.isEmpty()) {
+                    break;
+                }
+                for (JsonNode repository : root) {
+                    String repositoryOwner = repository.path("owner").path("login").asText("");
+                    if (!repositoryOwner.equalsIgnoreCase(normalizedOwner)) {
+                        continue;
+                    }
+                    String name = repository.path("name").asText("");
+                    String fullName = repository.path("full_name").asText("");
+                    repositories.add(new GitHubRepositoryOptionResponse(
+                            name,
+                            fullName,
+                            repositoryOwner,
+                            repository.path("default_branch").asText("main"),
+                            repository.path("private").asBoolean(false),
+                            repository.path("fork").asBoolean(false),
+                            isGitHubPagesCandidate(normalizedOwner, name),
+                            repository.path("html_url").asText(null),
+                            repository.path("updated_at").asText(null)
+                    ));
+                }
+                if (root.size() < 100) {
+                    break;
+                }
+            }
+            return repositories;
+        } catch (GeneralException exception) {
+            throw exception;
+        } catch (IOException exception) {
+            throw new GeneralException(ErrorCode.BAD_REQUEST, "GitHub 저장소 목록 조회 중 네트워크 오류가 발생했습니다.");
+        } catch (InterruptedException exception) {
+            Thread.currentThread().interrupt();
+            throw new GeneralException(ErrorCode.BAD_REQUEST, "GitHub 저장소 목록 조회가 중단되었습니다.");
+        }
+    }
+
+    public List<GitHubBranchOptionResponse> listBranches(String repositoryFullName) {
+        validateToken();
+        validateRepository(repositoryFullName);
+
+        try {
+            List<GitHubBranchOptionResponse> branches = new ArrayList<>();
+            for (int page = 1; page <= 5; page++) {
+                URI uri = URI.create(GITHUB_API_BASE_URL + "/repos/" + repositoryFullName
+                        + "/branches?per_page=100&page=" + page);
+                JsonNode root = getJson(uri);
+                if (!root.isArray() || root.isEmpty()) {
+                    break;
+                }
+                for (JsonNode branch : root) {
+                    branches.add(new GitHubBranchOptionResponse(
+                            branch.path("name").asText(""),
+                            branch.path("commit").path("sha").asText(null),
+                            branch.path("protected").asBoolean(false)
+                    ));
+                }
+                if (root.size() < 100) {
+                    break;
+                }
+            }
+            return branches;
+        } catch (GeneralException exception) {
+            throw exception;
+        } catch (IOException exception) {
+            throw new GeneralException(ErrorCode.BAD_REQUEST, "GitHub 브랜치 목록 조회 중 네트워크 오류가 발생했습니다.");
+        } catch (InterruptedException exception) {
+            Thread.currentThread().interrupt();
+            throw new GeneralException(ErrorCode.BAD_REQUEST, "GitHub 브랜치 목록 조회가 중단되었습니다.");
+        }
+    }
+
     private String fetchCurrentSha(String repositoryFullName, String branchName, String filePath) throws IOException, InterruptedException {
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(contentsUri(repositoryFullName, filePath, branchName))
@@ -204,6 +293,18 @@ public class GitHubContentsClient {
         if (repositoryFullName == null || repositoryFullName.isBlank() || !repositoryFullName.contains("/")) {
             throw new GeneralException(ErrorCode.BAD_REQUEST, "GitHub Pages 저장소 full name이 올바르지 않습니다.");
         }
+    }
+
+    private boolean isGitHubPagesCandidate(String ownerLogin, String repositoryName) {
+        String expectedName = ownerLogin.toLowerCase(Locale.ROOT) + ".github.io";
+        return repositoryName.equalsIgnoreCase(expectedName) || repositoryName.toLowerCase(Locale.ROOT).endsWith(".github.io");
+    }
+
+    private String trimToNull(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        return value.trim();
     }
 
     private String normalizeContentRootPath(String contentRootPath) {

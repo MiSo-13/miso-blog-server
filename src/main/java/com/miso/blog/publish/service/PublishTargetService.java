@@ -5,7 +5,9 @@ import com.miso.blog.common.exception.GeneralException;
 import com.miso.blog.publish.code.PublishChannel;
 import com.miso.blog.publish.code.PublishRole;
 import com.miso.blog.publish.dto.CreatePublishTargetRequest;
+import com.miso.blog.publish.dto.GitHubBranchOptionResponse;
 import com.miso.blog.publish.dto.GitHubPagesConnectionTestResponse;
+import com.miso.blog.publish.dto.GitHubRepositoryOptionResponse;
 import com.miso.blog.publish.dto.PublishStrategyResponse;
 import com.miso.blog.publish.dto.PublishTargetResponse;
 import com.miso.blog.publish.dto.UpdatePublishTargetRequest;
@@ -57,6 +59,16 @@ public class PublishTargetService {
                 "서버 DB의 Markdown을 원본으로 저장하고 GitHub Pages에는 Markdown 파일 commit, Velog에는 노출용 export를 제공합니다.",
                 getTargets()
         );
+    }
+
+    @Transactional(readOnly = true)
+    public List<GitHubRepositoryOptionResponse> getGitHubRepositories() {
+        return gitHubContentsClient.listRepositories(gitHubPagesTargetDefaults.owner());
+    }
+
+    @Transactional(readOnly = true)
+    public List<GitHubBranchOptionResponse> getGitHubBranches(String repositoryFullName) {
+        return gitHubContentsClient.listBranches(repositoryFullName);
     }
 
     @Transactional(readOnly = true)

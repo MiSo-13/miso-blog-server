@@ -2,7 +2,9 @@ package com.miso.blog.publish.controller;
 
 import com.miso.blog.common.api.ApiDataResponse;
 import com.miso.blog.publish.dto.CreatePublishTargetRequest;
+import com.miso.blog.publish.dto.GitHubBranchOptionResponse;
 import com.miso.blog.publish.dto.GitHubPagesConnectionTestResponse;
+import com.miso.blog.publish.dto.GitHubRepositoryOptionResponse;
 import com.miso.blog.publish.dto.PublishStrategyResponse;
 import com.miso.blog.publish.dto.PublishTargetResponse;
 import com.miso.blog.publish.dto.UpdatePublishTargetRequest;
@@ -17,6 +19,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -38,6 +41,20 @@ public class PublishTargetController {
     @Operation(summary = "기본 발행 전략 조회")
     public ApiDataResponse<PublishStrategyResponse> getStrategy() {
         return ApiDataResponse.ok(publishTargetService.getStrategy());
+    }
+
+    @GetMapping("/github/repositories")
+    @Operation(summary = "GitHub 저장소 선택 목록 조회", description = "private 설정의 github.owner에 해당하는 접근 가능한 저장소 목록을 조회합니다.")
+    public ApiDataResponse<List<GitHubRepositoryOptionResponse>> getGitHubRepositories() {
+        return ApiDataResponse.ok(publishTargetService.getGitHubRepositories());
+    }
+
+    @GetMapping("/github/branches")
+    @Operation(summary = "GitHub 브랜치 선택 목록 조회")
+    public ApiDataResponse<List<GitHubBranchOptionResponse>> getGitHubBranches(
+            @RequestParam String repositoryFullName
+    ) {
+        return ApiDataResponse.ok(publishTargetService.getGitHubBranches(repositoryFullName));
     }
 
     @PostMapping

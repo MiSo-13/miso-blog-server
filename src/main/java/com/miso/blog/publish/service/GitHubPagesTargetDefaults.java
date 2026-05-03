@@ -27,6 +27,10 @@ public class GitHubPagesTargetDefaults {
     @Value("${blog.github.pages-custom-domain:}")
     private String customDomain;
 
+    public String owner() {
+        return trimToNull(owner);
+    }
+
     public String repositoryFullName(PublishTargetEntity target) {
         String targetValue = trimToNull(target.getRepositoryFullName());
         if (targetValue != null) {
