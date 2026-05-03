@@ -85,6 +85,8 @@ Windows PowerShell에서는 다음 명령을 사용할 수 있습니다.
 - Blog post version diff: `GET /api/blog-posts/{blogPostId}/versions/diff`
 - Publish strategy: `GET /api/publish-targets/strategy`
 - Default publish targets: `POST /api/publish-targets/defaults`
+- GitHub repositories: `GET /api/publish-targets/github/repositories`
+- GitHub branches: `GET /api/publish-targets/github/branches?repositoryFullName=owner/repo`
 - GitHub Pages connection test: `POST /api/publish-targets/{targetId}/test-github-pages`
 - GitHub Pages publish: `POST /api/blog-posts/{blogPostId}/publish/github-pages`
 - Velog export: `POST /api/blog-posts/{blogPostId}/export/velog`
@@ -95,7 +97,7 @@ Windows PowerShell에서는 다음 명령을 사용할 수 있습니다.
 - 분석 근거인 `sourceSummary`는 DB 저장 전과 OpenAI 전송 전에 secret masking 필터를 거칩니다.
 - `application-private.yml`은 계속 git에 올리지 않고, 실제 키는 로컬 private 설정 또는 환경 변수에서만 관리합니다.
 - GitHub Pages 발행용 GitHub token은 대상 저장소 contents write 권한이 필요합니다.
-- GitHub Pages 저장소는 DB의 `repositoryFullName` 또는 private 설정의 `github.owner` / `github.pages-repository-full-name`으로 지정할 수 있습니다.
+- GitHub 계정명은 private 설정의 `github.owner`에 넣고, 저장소와 브랜치는 웹에서 목록 조회 후 선택할 수 있습니다.
 - 업로드 이미지는 기본적으로 `uploads/blog-media`에 저장되며 git에 올라가지 않습니다.
 
 ## 문서

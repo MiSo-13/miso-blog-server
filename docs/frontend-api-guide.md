@@ -549,10 +549,60 @@ POST /api/publish-targets/defaults
 GET /api/publish-targets
 POST /api/publish-targets
 PATCH /api/publish-targets/{targetId}
+GET /api/publish-targets/github/repositories
+GET /api/publish-targets/github/branches?repositoryFullName=user/user.github.io
 POST /api/publish-targets/{targetId}/test-github-pages
 ```
 
-GitHub Pages 대상에는 최소한 다음 값이 필요합니다. 단, `application-private.yml`에 `github.owner` 또는 `github.pages-repository-full-name`을 입력했다면 `repositoryFullName`은 서버 설정값으로 대체될 수 있습니다.
+기본 흐름은 `application-private.yml`에 GitHub token과 owner만 넣고, 프론트에서 저장소와 브랜치를 선택하는 방식입니다.
+
+### GitHub 저장소 선택
+
+```http
+GET /api/publish-targets/github/repositories
+```
+
+private 설정의 `github.owner`에 해당하는 접근 가능한 저장소 목록을 반환합니다. GitHub Pages 후보 저장소는 `githubPagesCandidate=true`로 표시됩니다.
+
+응답 예시:
+
+```json
+[
+  {
+    "name": "user.github.io",
+    "fullName": "user/user.github.io",
+    "ownerLogin": "user",
+    "defaultBranch": "main",
+    "privateRepository": false,
+    "fork": false,
+    "githubPagesCandidate": true,
+    "htmlUrl": "https://github.com/user/user.github.io",
+    "updatedAt": "2026-05-03T12:00:00Z"
+  }
+]
+```
+
+### GitHub 브랜치 선택
+
+```http
+GET /api/publish-targets/github/branches?repositoryFullName=user/user.github.io
+```
+
+선택한 저장소의 브랜치 목록을 반환합니다. 프론트에서는 저장소 선택 후 이 API를 호출하고, 사용자가 선택한 branch를 `PATCH /api/publish-targets/{targetId}`에 저장하면 됩니다.
+
+응답 예시:
+
+```json
+[
+  {
+    "name": "main",
+    "commitSha": "abc123",
+    "protectedBranch": false
+  }
+]
+```
+
+GitHub Pages 대상에는 최종적으로 다음 값이 저장되어야 합니다.
 
 ```json
 {

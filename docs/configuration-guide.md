@@ -36,17 +36,18 @@ openai:
 github:
   token: 개인 GitHub Token
   owner: GitHub 계정명
-  pages-repository-name: GitHub Pages 저장소명. 비우면 owner.github.io 사용
-  pages-repository-full-name: owner/repository 형식. 이 값이 있으면 owner/name보다 우선
+  # 아래 값들은 직접 고정하고 싶을 때만 사용합니다. 기본 흐름은 웹에서 repo/branch를 선택하는 방식입니다.
+  pages-repository-name:
+  pages-repository-full-name:
   pages-branch: main
   pages-content-root-path: _posts
-  pages-base-url: https://owner.github.io
+  pages-base-url:
   pages-custom-domain:
 ```
 
 GitHub Pages 발행을 사용하려면 `github.token`에 대상 저장소 `Contents: Read and write` 권한이 필요합니다. Fine-grained token을 권장하고, 대상 저장소만 선택하는 것이 안전합니다.
 
-`github.owner`만 입력하면 서버가 `owner/owner.github.io`를 기본 저장소로 추론합니다. 다른 저장소를 쓸 경우 `pages-repository-name` 또는 `pages-repository-full-name`을 입력하세요.
+기본 흐름은 `github.token`, `github.owner`만 private에 입력하고, 프론트에서 저장소와 브랜치를 선택하는 방식입니다. 직접 고정하고 싶을 때만 `pages-repository-name` 또는 `pages-repository-full-name`을 입력하세요.
 
 ## 환경 변수
 
