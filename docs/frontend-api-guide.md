@@ -401,6 +401,24 @@ POST /api/git-repositories/analysis-reports/{reportId}/write-blog-post
 
 ## 블로그 글
 
+### 이전 글 자동 참고
+
+AI가 새 글을 작성하거나 기존 글을 수정/첨삭할 때 서버는 최근 저장된 블로그 글 일부를 자동으로 참고합니다. 프론트에서 별도 필드를 보낼 필요는 없습니다.
+
+적용 대상:
+
+- `POST /api/blog-posts/draft/ai-general`
+- `POST /api/ai-jobs/blog-posts/draft/ai-general`
+- `POST /api/git-repositories/analysis-reports/{reportId}/write-blog-post`
+- `POST /api/local-repositories/analysis-reports/{reportId}/write-blog-post`
+- `POST /api/blog-posts/{blogPostId}/revise/ai`
+- `POST /api/blog-posts/{blogPostId}/quality-review/ai`
+- `POST /api/blog-posts/{blogPostId}/quality-improve/ai`
+
+프론트 안내 문구 예시:
+
+> 이전에 저장한 글의 문체와 구성을 참고해서 더 일관된 블로그 톤으로 작성합니다.
+
 ## 블로그 이미지
 
 일반 블로그 작성에 사용할 이미지는 먼저 서버에 업로드한 뒤, 응답의 `publicUrl`을 `POST /api/blog-posts/draft/ai-general` 요청의 `photos[].url`에 넣으면 됩니다.

@@ -9,6 +9,8 @@ import java.util.Optional;
 public interface BlogPostRepository extends JpaRepository<BlogPostEntity, Long> {
     List<BlogPostEntity> findAllByOrderByIdDesc();
 
+    List<BlogPostEntity> findTop5ByIdNotOrderByIdDesc(Long id);
+
     Optional<BlogPostEntity> findBySlug(String slug);
 
     boolean existsBySlug(String slug);

@@ -39,6 +39,7 @@ public class OpenAiGeneralBlogDraftComposer {
     private final AiUsageLogRepository aiUsageLogRepository;
     private final OpenAiCostEstimator openAiCostEstimator;
     private final SecretMaskingService secretMaskingService;
+    private final BlogPostMemoryContextService blogPostMemoryContextService;
     private final HttpClient httpClient = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(10))
             .build();
@@ -145,6 +146,9 @@ public class OpenAiGeneralBlogDraftComposer {
                 사진/이미지 자료: %s
                 이미지 배치 메모: %s
 
+                이전 저장 글 참고:
+                %s
+
                 사용자 메모:
                 %s
 
@@ -177,6 +181,7 @@ public class OpenAiGeneralBlogDraftComposer {
                 lengthInstruction(request.targetLength()),
                 writeJsonQuietly(request.photos()),
                 valueOrDefault(request.imagePlacementNotes(), "(없음)"),
+                blogPostMemoryContextService.buildRecentPostContext(null),
                 secretMaskingService.mask(valueOrDefault(request.memo(), "(없음)"))
         );
     }

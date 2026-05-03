@@ -38,6 +38,7 @@ public class OpenAiBlogQualityReviewer {
     private final AiUsageLogRepository aiUsageLogRepository;
     private final OpenAiCostEstimator openAiCostEstimator;
     private final SecretMaskingService secretMaskingService;
+    private final BlogPostMemoryContextService blogPostMemoryContextService;
     private final HttpClient httpClient = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(10))
             .build();
@@ -152,6 +153,9 @@ public class OpenAiBlogQualityReviewer {
                 원본 입력/메모:
                 %s
 
+                이전 저장 글 참고:
+                %s
+
                 리뷰 기준:
                 - AI가 쓴 듯한 일반론, 과장된 칭찬, 반복 표현을 찾는다.
                 - 개발 블로그는 실제 구현 근거가 빈약한 기술 설명과 추상적인 결론을 찾는다.
@@ -168,6 +172,7 @@ public class OpenAiBlogQualityReviewer {
                 valueOrDefault(request == null ? null : request.targetReader(), "(지정 없음)"),
                 valueOrDefault(request == null ? null : request.monetizationGoal(), "검색 유입과 장기 수익화"),
                 secretMaskingService.mask(valueOrDefault(request == null ? null : request.originalInputMemo(), "(없음)")),
+                blogPostMemoryContextService.buildRecentPostContext(blogPost.getId()),
                 secretMaskingService.mask(blogPost.getContentMarkdown())
         );
     }

@@ -39,6 +39,7 @@ public class OpenAiBlogRevisionComposer {
     private final AiUsageLogRepository aiUsageLogRepository;
     private final OpenAiCostEstimator openAiCostEstimator;
     private final SecretMaskingService secretMaskingService;
+    private final BlogPostMemoryContextService blogPostMemoryContextService;
     private final HttpClient httpClient = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(10))
             .build();
@@ -144,6 +145,9 @@ public class OpenAiBlogRevisionComposer {
                 원하는 톤: %s
                 목표 길이: %s
 
+                이전 저장 글 참고:
+                %s
+
                 현재 Markdown:
                 %s
                 """.formatted(
@@ -156,6 +160,7 @@ public class OpenAiBlogRevisionComposer {
                 secretMaskingService.mask(valueOrDefault(request.additionalMemo(), "(없음)")),
                 valueOrDefault(request.tone(), "(기존 글 톤 유지)"),
                 request.targetLength() == null ? GeneralBlogLength.MEDIUM : request.targetLength(),
+                blogPostMemoryContextService.buildRecentPostContext(blogPost.getId()),
                 secretMaskingService.mask(blogPost.getContentMarkdown())
         );
     }

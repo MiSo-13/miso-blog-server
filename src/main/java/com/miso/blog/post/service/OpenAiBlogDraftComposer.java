@@ -38,6 +38,7 @@ public class OpenAiBlogDraftComposer {
     private final AiUsageLogRepository aiUsageLogRepository;
     private final OpenAiCostEstimator openAiCostEstimator;
     private final SecretMaskingService secretMaskingService;
+    private final BlogPostMemoryContextService blogPostMemoryContextService;
     private final HttpClient httpClient = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(10))
             .build();
@@ -151,6 +152,9 @@ public class OpenAiBlogDraftComposer {
                 글감 후보:
                 %s
 
+                이전 저장 글 참고:
+                %s
+
                 분석 근거:
                 %s
                 """.formatted(
@@ -161,6 +165,7 @@ public class OpenAiBlogDraftComposer {
                 request.audience() == null || request.audience().isBlank() ? "비슷한 문제를 겪는 백엔드/풀스택 개발자" : request.audience(),
                 analysisSummary == null ? "(없음)" : analysisSummary,
                 writeJsonQuietly(topicCandidates),
+                blogPostMemoryContextService.buildRecentPostContext(null),
                 sourceSummary == null ? "(없음)" : sourceSummary
         );
     }
