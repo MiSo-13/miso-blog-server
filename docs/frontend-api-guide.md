@@ -180,6 +180,63 @@ POST /api/blog-posts/draft/manual
 }
 ```
 
+### 일반 블로그 AI 초안 생성
+
+맛집, 식당, 카페, 여행, 제품 리뷰, 일상 글처럼 Git 분석과 무관한 일반 블로그 초안을 생성합니다. 사용자가 사진 URL/설명, 꼭 넣어야 할 문구, 메모, 키워드를 입력하면 AI가 전체 Markdown 초안을 만들고 기존 `BlogPost`로 저장합니다.
+
+```http
+POST /api/blog-posts/draft/ai-general
+```
+
+```json
+{
+  "category": "RESTAURANT",
+  "titleHint": "성수동 파스타 맛집 후기",
+  "placeName": "성수 라비올리",
+  "addressHint": "서울 성동구 성수동",
+  "requiredPhrases": [
+    "예약하고 방문하는 걸 추천합니다",
+    "트러플 크림 파스타가 특히 좋았습니다"
+  ],
+  "memo": "주말 저녁 방문. 내부는 조용했고 데이트하기 좋음. 가격은 조금 있지만 만족도 높음.",
+  "keywords": ["성수 맛집", "파스타", "데이트", "트러플"],
+  "photos": [
+    {
+      "url": "https://example.com/outside.jpg",
+      "description": "가게 외관 사진",
+      "placementNote": "도입부 근처"
+    },
+    {
+      "url": "https://example.com/pasta.jpg",
+      "description": "트러플 크림 파스타 사진",
+      "placementNote": "메뉴 설명 문단"
+    }
+  ],
+  "imagePlacementNotes": "사진 자리표시자는 [사진: 설명] 형태로 본문 중간에 넣기",
+  "tone": "친근하고 자연스러운 후기체",
+  "audience": "성수동 데이트 맛집을 찾는 독자",
+  "targetLength": "LONG",
+  "markReviewReady": true
+}
+```
+
+`category`:
+
+- `RESTAURANT`
+- `CAFE`
+- `TRAVEL`
+- `PRODUCT_REVIEW`
+- `DAILY`
+- `ETC`
+
+`targetLength`:
+
+- `SHORT`
+- `MEDIUM`
+- `LONG`
+
+응답은 기존 `BlogPostResponse`와 동일합니다. 프론트에서는 생성 직후 Markdown 미리보기, 검수 대기 여부, GitHub Pages 발행/Velog export 버튼을 같은 화면에서 이어주면 됩니다.
+
 ### 글 관리
 
 ```http

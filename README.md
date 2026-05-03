@@ -1,6 +1,7 @@
 # Miso Blog Server
 
 Miso Blog Server는 Git 저장소의 코드 변경, 기술 이슈, 장애 해결 과정을 수집하고 OpenAI를 이용해 블로그 초안을 생성하는 서버입니다.
+사진 설명, 필수 문구, 메모, 키워드를 기반으로 맛집/카페/여행 같은 일반 블로그 초안도 생성할 수 있습니다.
 
 ## 기술 스택
 
@@ -68,6 +69,7 @@ Windows PowerShell에서는 다음 명령을 사용할 수 있습니다.
 - Git analysis: `POST /api/git-repositories/{repositoryId}/analyze`
 - Git reports: `GET /api/git-repositories/{repositoryId}/analysis-reports`
 - Blog drafts: `POST /api/blog-posts/draft/manual`
+- General AI blog draft: `POST /api/blog-posts/draft/ai-general`
 - Blog posts: `GET /api/blog-posts`
 - Blog post detail: `GET /api/blog-posts/{blogPostId}`
 - Publish strategy: `GET /api/publish-targets/strategy`

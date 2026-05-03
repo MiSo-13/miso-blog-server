@@ -3,6 +3,7 @@
 ## 목표
 
 Miso Blog Server는 사용자의 Git 저장소에서 실제 구현 기록을 읽고, 코드 변경과 commit 맥락을 바탕으로 개발 블로그 글감과 초안을 생성하는 서버입니다.
+또한 사진 설명, 필수 문구, 메모, 키워드를 기반으로 맛집/카페/여행 같은 일반 블로그 초안도 생성할 수 있습니다.
 
 핵심은 “일반적인 기술 글”이 아니라 “내가 실제로 구현한 코드와 문제 해결 기록을 최대한 구체적으로 블로그화하는 것”입니다.
 
@@ -25,6 +26,13 @@ Miso Blog Server는 사용자의 Git 저장소에서 실제 구현 기록을 읽
 7. 분석 결과를 블로그 초안으로 전환합니다.
 8. 승인된 글을 GitHub Pages 저장소의 `_posts` 경로에 Markdown 파일로 commit합니다.
 9. 필요하면 Velog 노출용 Markdown을 export해 재발행을 보조합니다.
+
+## 일반 블로그 작성 시나리오
+
+1. 사용자가 카테고리, 제목 힌트, 장소명, 필수 문구, 메모, 키워드, 사진 설명을 입력합니다.
+2. 서버가 입력값을 OpenAI에 전달해 자연스러운 Markdown 초안을 생성합니다.
+3. 생성된 글은 기존 `BlogPost` 초안으로 저장됩니다.
+4. 이후 검수, 승인, GitHub Pages 발행, Velog export 흐름을 동일하게 사용합니다.
 
 ## Private Repo 처리 원칙
 
@@ -67,6 +75,7 @@ Miso Blog Server는 사용자의 Git 저장소에서 실제 구현 기록을 읽
 - GitHub 최근 commit 기반 OpenAI 분석
 - 키워드/글감 후보/Markdown 초안 저장
 - 분석 결과를 블로그 초안으로 전환
+- 맛집/카페/여행 등 일반 블로그 AI 초안 작성
 - 블로그 글 검수/승인/발행 상태 관리
 - GitHub Pages/Velog 발행 대상 관리
 - GitHub Pages Markdown commit 발행
