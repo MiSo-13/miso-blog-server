@@ -73,6 +73,7 @@ POST /api/ai-jobs/blog-posts/{blogPostId}/quality-improve/ai
 ```http
 GET /api/ai-jobs/{jobId}
 GET /api/ai-jobs
+POST /api/ai-jobs/{jobId}/retry
 ```
 
 응답 예시:
@@ -85,6 +86,10 @@ GET /api/ai-jobs
   "resultBlogPostId": 10,
   "resultJson": "{\"id\":10,\"title\":\"성수동 파스타 맛집 후기\"}",
   "errorMessage": null,
+  "failure": null,
+  "retryable": false,
+  "retryCount": 0,
+  "retriedFromJobId": null,
   "startedAt": "2026-05-03T11:30:00",
   "finishedAt": "2026-05-03T11:30:20",
   "createdAt": "2026-05-03T11:29:59",
@@ -99,6 +104,36 @@ GET /api/ai-jobs
 3. 1~3초 간격으로 `GET /api/ai-jobs/{jobId}` polling
 4. `SUCCEEDED`이면 `resultBlogPostId`로 `GET /api/blog-posts/{blogPostId}` 호출
 5. `FAILED`이면 `errorMessage`를 보여주고 재시도 버튼 제공
+
+실패 응답 예시:
+
+```json
+{
+  "id": 12,
+  "type": "BLOG_POST_QUALITY_IMPROVE",
+  "status": "FAILED",
+  "errorMessage": "OpenAI 요청 한도를 초과했습니다.",
+  "failure": {
+    "code": "OPENAI_RATE_LIMIT",
+    "message": "OpenAI 요청 한도를 초과했습니다.",
+    "detailMessage": "OpenAI 블로그 작성 호출에 실패했습니다. status=429",
+    "retryable": true,
+    "actionGuide": "잠시 후 다시 시도하거나 모델, 요청량, 결제 한도를 확인하세요.",
+    "failedAt": "2026-05-03T12:30:00"
+  },
+  "retryable": true,
+  "retryCount": 0,
+  "retriedFromJobId": null
+}
+```
+
+재시도:
+
+```http
+POST /api/ai-jobs/{jobId}/retry
+```
+
+재시도 API는 기존 실패 job을 다시 실행하지 않고 같은 요청으로 새 job을 만듭니다. 응답의 새 `id`를 기준으로 다시 polling하세요. `retryable=false`이면 설정, 입력값, 글 상태를 먼저 고쳐야 하므로 재시도 버튼을 숨기거나 비활성화하는 것이 좋습니다.
 
 기존 동기 API도 유지하지만, 프론트에서는 비동기 job API를 기본으로 쓰는 것을 권장합니다.
 

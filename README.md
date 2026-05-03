@@ -64,6 +64,7 @@ Windows PowerShell에서는 다음 명령을 사용할 수 있습니다.
 
 - AI jobs: `GET /api/ai-jobs`
 - AI job detail: `GET /api/ai-jobs/{jobId}`
+- Retry failed AI job: `POST /api/ai-jobs/{jobId}/retry`
 - Async general AI blog draft: `POST /api/ai-jobs/blog-posts/draft/ai-general`
 - Async AI blog revision: `POST /api/ai-jobs/blog-posts/{blogPostId}/revise/ai`
 - Async AI blog quality improve: `POST /api/ai-jobs/blog-posts/{blogPostId}/quality-improve/ai`
