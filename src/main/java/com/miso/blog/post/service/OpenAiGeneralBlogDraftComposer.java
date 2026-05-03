@@ -26,6 +26,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -53,10 +54,12 @@ public class OpenAiGeneralBlogDraftComposer {
         LocalDateTime startedAt = LocalDateTime.now();
 
         try {
-            Map<String, Object> requestBody = Map.of(
-                    "model", model,
-                    "response_format", Map.of("type", "json_object"),
-                    "messages", List.of(
+            Map<String, Object> requestBody = new HashMap<>();
+            requestBody.put("model", model);
+            requestBody.put("temperature", 0.35);
+            requestBody.put("max_tokens", maxOutputTokens(request.targetLength()));
+            requestBody.put("response_format", Map.of("type", "json_object"));
+            requestBody.put("messages", List.of(
                             Map.of(
                                     "role",
                                     "system",
@@ -66,10 +69,14 @@ public class OpenAiGeneralBlogDraftComposer {
                                     맛집, 카페, 여행, 제품 리뷰, 일상 글을 자연스럽고 검색 친화적인 후기체로 작성한다.
                                     반드시 JSON 객체로만 응답한다.
                                     응답 필드는 title, summary, contentMarkdown, tags 이다.
+                                    contentMarkdown은 바로 발행 가능한 Markdown이어야 하며, H2 소제목과 자연스러운 문단을 포함한다.
+                                    사용자가 요청한 목표 길이를 반드시 지킨다. LONG은 짧은 요약문이 아니라 충분히 확장된 본문이어야 한다.
                                     사용자가 준 메모, 필수 문구, 키워드, 사진 설명을 최우선 근거로 삼는다.
                                     모르는 사실, 방문하지 않은 경험, 가격, 영업시간, 메뉴, 위치 정보는 단정하지 않는다.
-                                    사진은 실제 파일을 보지 못하므로 사진 설명과 URL만 근거로 자연스럽게 배치한다.
+                                    사진 URL이 있으면 본문 흐름에 맞춰 Markdown 이미지 문법으로 배치한다.
                                     과장 광고처럼 쓰지 말고, 개인 블로그 후기처럼 구체적이고 담백하게 쓴다.
+                                    제공되지 않은 메뉴 구성, 재료, 양, 대기 시간, 영업 정보, 가격 상세는 절대 만들어내지 않는다.
+                                    사용자의 메모에 없는 방문 전 검색 과정, 예약 여부, 다른 메뉴 평가, 피크 시간 상황도 만들어내지 않는다.
                                     """
                             ),
                             Map.of(
@@ -78,8 +85,7 @@ public class OpenAiGeneralBlogDraftComposer {
                                     "content",
                                     buildPrompt(request)
                             )
-                    )
-            );
+                    ));
 
             HttpRequest httpRequest = HttpRequest.newBuilder()
                     .uri(URI.create(CHAT_COMPLETIONS_ENDPOINT))
@@ -135,6 +141,7 @@ public class OpenAiGeneralBlogDraftComposer {
                 톤: %s
                 독자: %s
                 목표 길이: %s
+                분량 요구: %s
                 사진/이미지 자료: %s
                 이미지 배치 메모: %s
 
@@ -144,8 +151,18 @@ public class OpenAiGeneralBlogDraftComposer {
                 작성 지침:
                 - 첫 문단은 검색 유입 독자가 바로 맥락을 이해할 수 있게 쓴다.
                 - 필수 포함 문구는 의미를 바꾸지 말고 자연스럽게 녹인다.
-                - 사진 설명이 있으면 본문 중간에 [사진: 설명] 형태의 자리표시자를 넣는다.
+                - 사진 URL이 있으면 본문 중간에 ![사진 설명](사진 URL) 형태로 넣고, 필요하면 짧은 캡션을 붙인다.
+                - 사진 URL이 없고 설명만 있으면 [사진: 설명] 형태의 자리표시자를 넣는다.
+                - 제공된 사진 URL은 모두 한 번씩 사용한다.
+                - RESTAURANT/CAFE 글은 방문 배경, 공간 분위기, 메뉴/맛, 좋았던 점, 아쉬운 점, 추천 대상, 마무리를 자연스럽게 포함한다.
+                - TRAVEL 글은 이동/동선, 인상적인 장면, 좋았던 점, 아쉬운 점, 추천 대상을 포함한다.
+                - PRODUCT_REVIEW 글은 사용 배경, 장점, 아쉬운 점, 추천 대상을 포함한다.
+                - 각 주요 소제목 아래에는 최소 2문단을 작성한다.
                 - 과도한 광고 문구보다 실제 후기처럼 장단점과 분위기를 균형 있게 쓴다.
+                - 대표 메뉴, 메뉴 구성, 재료 신선도, 영업시간, 정확한 가격, 웨이팅, 좌석 수처럼 제공되지 않은 정보는 추가하지 않는다.
+                - “후기를 보고 방문했다”, “미리 예약했다”, “다른 메뉴도 좋았다”, “신선한 재료”처럼 입력에 없는 배경/판단은 쓰지 않는다.
+                - 분량을 늘릴 때도 새로운 사실을 만들지 말고, 제공된 메모를 더 자세한 감상/맥락/추천 포인트로 풀어쓴다.
+                - 정보가 부족한 영역은 “자세히 확인하지 못했지만”, “메모 기준으로는”처럼 한계를 드러낸다.
                 - 제공되지 않은 사실은 “그랬다”고 단정하지 않는다.
                 """.formatted(
                 request.category(),
@@ -157,6 +174,7 @@ public class OpenAiGeneralBlogDraftComposer {
                 valueOrDefault(request.tone(), "친근하고 자연스러운 후기체"),
                 valueOrDefault(request.audience(), "일반 블로그 독자"),
                 request.targetLength() == null ? GeneralBlogLength.MEDIUM : request.targetLength(),
+                lengthInstruction(request.targetLength()),
                 writeJsonQuietly(request.photos()),
                 valueOrDefault(request.imagePlacementNotes(), "(없음)"),
                 secretMaskingService.mask(valueOrDefault(request.memo(), "(없음)"))
@@ -224,6 +242,24 @@ public class OpenAiGeneralBlogDraftComposer {
             return request.placeName().trim() + " 방문 후기";
         }
         return request.category().name() + " 블로그 후기";
+    }
+
+    private int maxOutputTokens(GeneralBlogLength targetLength) {
+        GeneralBlogLength length = targetLength == null ? GeneralBlogLength.MEDIUM : targetLength;
+        return switch (length) {
+            case SHORT -> 1200;
+            case MEDIUM -> 2200;
+            case LONG -> 4000;
+        };
+    }
+
+    private String lengthInstruction(GeneralBlogLength targetLength) {
+        GeneralBlogLength length = targetLength == null ? GeneralBlogLength.MEDIUM : targetLength;
+        return switch (length) {
+            case SHORT -> "contentMarkdown 기준 800~1200자. 핵심 후기 중심.";
+            case MEDIUM -> "contentMarkdown 기준 1400~2200자. 소제목 4개 이상.";
+            case LONG -> "contentMarkdown 기준 최소 2500자 이상. 소제목 6개 이상, 각 소제목마다 2문단 이상.";
+        };
     }
 
     private String defaultSummary(CreateGeneralBlogPostRequest request) {
