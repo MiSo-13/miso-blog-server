@@ -2,7 +2,7 @@
 
 ## Profile 구성
 
-기본 profile은 `local`입니다.
+기본 profile은 `local`이며 `application-private.yml`을 함께 읽습니다. 이 파일은 git에 올라가지 않습니다.
 
 ```yaml
 spring:
@@ -10,8 +10,6 @@ spring:
     active: ${SPRING_PROFILES_ACTIVE:local}
     include: private
 ```
-
-민감 정보는 `application-private.yml`에 작성합니다. 이 파일은 git에 올리지 않습니다.
 
 ## application-private.yml
 
@@ -37,9 +35,18 @@ openai:
 
 github:
   token: 개인 GitHub Token
+  owner: GitHub 계정명
+  pages-repository-name: GitHub Pages 저장소명. 비우면 owner.github.io 사용
+  pages-repository-full-name: owner/repository 형식. 이 값이 있으면 owner/name보다 우선
+  pages-branch: main
+  pages-content-root-path: _posts
+  pages-base-url: https://owner.github.io
+  pages-custom-domain:
 ```
 
-GitHub Pages 발행을 사용하려면 `github.token`에 발행 저장소 contents write 권한이 필요합니다. classic PAT를 쓰는 경우 `repo` 권한, fine-grained token을 쓰는 경우 대상 저장소의 `Contents: Read and write` 권한을 부여합니다.
+GitHub Pages 발행을 사용하려면 `github.token`에 대상 저장소 `Contents: Read and write` 권한이 필요합니다. Fine-grained token을 권장하고, 대상 저장소만 선택하는 것이 안전합니다.
+
+`github.owner`만 입력하면 서버가 `owner/owner.github.io`를 기본 저장소로 추론합니다. 다른 저장소를 쓸 경우 `pages-repository-name` 또는 `pages-repository-full-name`을 입력하세요.
 
 ## 환경 변수
 
@@ -60,12 +67,19 @@ GitHub Pages 발행을 사용하려면 `github.token`에 발행 저장소 conten
 | `OPENAI_ADMIN_KEY` | OpenAI Admin API Key |
 | `OPENAI_MODEL` | OpenAI 모델 |
 | `OPENAI_BUDGET_LIMIT_USD` | 월 예산 한도 USD |
-| `GITHUB_TOKEN` | GitHub API Token. GitHub Pages 발행 시 contents write 권한 필요 |
-| `BLOG_MEDIA_UPLOAD_DIR` | 블로그 이미지 저장 경로. 기본값 `uploads/blog-media` |
-| `BLOG_MEDIA_PUBLIC_URL_PREFIX` | 이미지 public URL prefix. 기본값 `/media` |
-| `BLOG_MEDIA_MAX_FILE_SIZE` | multipart 단일 파일 제한. 기본값 `10MB` |
-| `BLOG_MEDIA_MAX_REQUEST_SIZE` | multipart 요청 전체 제한. 기본값 `30MB` |
-| `BLOG_MEDIA_MAX_FILE_SIZE_BYTES` | 서비스 레벨 파일 크기 제한. 기본값 `10485760` |
+| `GITHUB_TOKEN` | GitHub API Token |
+| `GITHUB_OWNER` | GitHub 계정명 |
+| `GITHUB_PAGES_REPOSITORY_NAME` | GitHub Pages 저장소명 |
+| `GITHUB_PAGES_REPOSITORY_FULL_NAME` | `owner/repository` 형식 저장소명 |
+| `GITHUB_PAGES_BRANCH` | GitHub Pages 브랜치 |
+| `GITHUB_PAGES_CONTENT_ROOT_PATH` | 글 파일 저장 경로. 기본값 `_posts` |
+| `GITHUB_PAGES_BASE_URL` | GitHub Pages 공개 URL |
+| `GITHUB_PAGES_CUSTOM_DOMAIN` | 자체 도메인 |
+| `BLOG_MEDIA_UPLOAD_DIR` | 블로그 이미지 저장 경로 |
+| `BLOG_MEDIA_PUBLIC_URL_PREFIX` | 이미지 public URL prefix |
+| `BLOG_MEDIA_MAX_FILE_SIZE` | multipart 파일 크기 제한 |
+| `BLOG_MEDIA_MAX_REQUEST_SIZE` | multipart 요청 전체 제한 |
+| `BLOG_MEDIA_MAX_FILE_SIZE_BYTES` | 서비스 내부 파일 크기 제한 |
 
 ## 로컬 인프라
 
@@ -75,7 +89,7 @@ RabbitMQ는 Docker Compose로 실행합니다.
 docker compose up -d rabbitmq
 ```
 
-MySQL은 로컬 설치 또는 별도 컨테이너를 사용할 수 있습니다. 초기 DB 이름은 `miso-blog`를 기준으로 합니다.
+MySQL 초기 DB 이름은 `miso-blog`입니다.
 
 ```sql
 CREATE DATABASE `miso-blog` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -83,15 +97,15 @@ CREATE DATABASE `miso-blog` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 ## 블로그 이미지 저장소
 
-기본 업로드 경로는 `uploads/blog-media`입니다. 이 경로는 git에 올라가지 않도록 `.gitignore`에 등록되어 있습니다.
+기본 업로드 경로는 `uploads/blog-media`입니다. 이 경로는 git에 올라가지 않습니다.
 
-로컬 실행 시 업로드된 이미지는 `/media/{yyyy}/{MM}/{dd}/{filename}` 형태로 접근할 수 있습니다.
+로컬 실행 중 업로드된 이미지는 `/media/{yyyy}/{MM}/{dd}/{filename}` 형태로 접근할 수 있습니다.
 
 ## OpenAI Admin Key
 
-OpenAI 사용량과 실제 비용 조회는 일반 project key가 아니라 Admin API Key가 필요합니다.
+OpenAI 사용량과 실제 비용 조회에는 일반 project key가 아니라 Admin API Key가 필요합니다.
 
-- `openai.api-key`: 글 생성 등 일반 OpenAI 호출용입니다.
-- `openai.admin-key`: `/v1/organization/costs`, `/v1/organization/usage/completions` 조회용입니다.
+- `openai.api-key`: 글 생성 등 일반 OpenAI 호출
+- `openai.admin-key`: `/v1/organization/costs`, `/v1/organization/usage/completions` 조회
 
-Admin Key가 없으면 `/api/admin/openai/summary`는 조회 불가 사유를 내려주고, costs/usage 상세 API는 `BAD_REQUEST`를 반환합니다.
+Admin Key가 없으면 비용/사용량 상세 API는 `BAD_REQUEST`를 반환합니다.

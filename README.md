@@ -95,6 +95,7 @@ Windows PowerShell에서는 다음 명령을 사용할 수 있습니다.
 - 분석 근거인 `sourceSummary`는 DB 저장 전과 OpenAI 전송 전에 secret masking 필터를 거칩니다.
 - `application-private.yml`은 계속 git에 올리지 않고, 실제 키는 로컬 private 설정 또는 환경 변수에서만 관리합니다.
 - GitHub Pages 발행용 GitHub token은 대상 저장소 contents write 권한이 필요합니다.
+- GitHub Pages 저장소는 DB의 `repositoryFullName` 또는 private 설정의 `github.owner` / `github.pages-repository-full-name`으로 지정할 수 있습니다.
 - 업로드 이미지는 기본적으로 `uploads/blog-media`에 저장되며 git에 올라가지 않습니다.
 
 ## 문서

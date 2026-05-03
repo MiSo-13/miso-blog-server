@@ -552,7 +552,7 @@ PATCH /api/publish-targets/{targetId}
 POST /api/publish-targets/{targetId}/test-github-pages
 ```
 
-GitHub Pages 대상에는 최소한 다음 값이 필요합니다.
+GitHub Pages 대상에는 최소한 다음 값이 필요합니다. 단, `application-private.yml`에 `github.owner` 또는 `github.pages-repository-full-name`을 입력했다면 `repositoryFullName`은 서버 설정값으로 대체될 수 있습니다.
 
 ```json
 {
@@ -595,7 +595,7 @@ POST /api/publish-targets/{targetId}/test-github-pages
 }
 ```
 
-프론트에서는 발행 설정 화면에 테스트 버튼을 두고, 성공 전까지 실제 발행 버튼을 비활성화하는 것을 권장합니다. 현재 target에 `repositoryFullName`이 비어 있으면 `GitHub Pages repositoryFullName을 먼저 설정하세요.` 메시지가 내려옵니다.
+프론트에서는 발행 설정 화면에 테스트 버튼을 두고, 성공 전까지 실제 발행 버튼을 비활성화하는 것을 권장합니다. 현재 target에 `repositoryFullName`이 비어 있어도 서버 private 설정의 `github.owner`가 있으면 `owner/owner.github.io`로 추론합니다.
 
 ## OpenAI 운영 API
 
