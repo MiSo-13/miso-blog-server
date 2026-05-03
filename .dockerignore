@@ -1,0 +1,13 @@
+.git
+.gradle
+.idea
+build
+out
+uploads
+*.log
+*.tmp
+*.pid
+src/main/resources/application-private.yml
+src/main/resources/application-private-*.yml
+build/resources/main/application-private.yml
+docs

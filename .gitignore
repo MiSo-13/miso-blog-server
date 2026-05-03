@@ -2,6 +2,8 @@ HELP.md
 .gradle
 build/
 src/main/resources/application-private.yml
+.env.deploy
+.env.local
 uploads/
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
