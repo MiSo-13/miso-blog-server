@@ -111,4 +111,5 @@ Jenkins 배포에서는 `/miso-blog/private/application-private.yml`을 빌드 �
 - [프로젝트 설명](docs/project-overview.md)
 - [설정 가이드](docs/configuration-guide.md)
 - [배포 가이드](docs/deployment-guide.md)
+- [서비스 사용자 가이드](docs/service-user-guide.md)
 - [프론트 연동 가이드](docs/frontend-api-guide.md)
