@@ -18,7 +18,9 @@ import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Base64;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 @Component
@@ -86,6 +88,55 @@ public class GitHubContentsClient {
         }
     }
 
+    public GitHubConnectionCheckResult checkConnection(
+            String repositoryFullName,
+            String branchName,
+            String contentRootPath
+    ) {
+        validateToken();
+        validateRepository(repositoryFullName);
+        if (branchName == null || branchName.isBlank()) {
+            throw new GeneralException(ErrorCode.BAD_REQUEST, "GitHub Pages 브랜치명이 설정되어 있지 않습니다.");
+        }
+
+        try {
+            List<String> checkedItems = new ArrayList<>();
+            List<String> warnings = new ArrayList<>();
+
+            JsonNode repository = getJson(URI.create(GITHUB_API_BASE_URL + "/repos/" + repositoryFullName));
+            checkedItems.add("repository");
+
+            JsonNode branch = getJson(URI.create(GITHUB_API_BASE_URL + "/repos/" + repositoryFullName + "/branches/" + encode(branchName)));
+            checkedItems.add("branch");
+
+            String normalizedRootPath = normalizeContentRootPath(contentRootPath);
+            JsonNode contentRoot = null;
+            if (normalizedRootPath != null) {
+                try {
+                    contentRoot = getJson(contentsUri(repositoryFullName, normalizedRootPath, branchName));
+                    checkedItems.add("contentRootPath");
+                } catch (GeneralException exception) {
+                    warnings.add("contentRootPath를 찾지 못했습니다. 발행 시 GitHub Contents API가 새 파일 경로를 만들 수 있지만, 상위 폴더 구조는 확인해 주세요.");
+                }
+            }
+
+            return new GitHubConnectionCheckResult(
+                    repository.path("html_url").asText(null),
+                    branch.path("_links").path("html").asText(null),
+                    contentRoot == null ? null : contentRoot.path("html_url").asText(null),
+                    checkedItems,
+                    warnings
+            );
+        } catch (GeneralException exception) {
+            throw exception;
+        } catch (IOException exception) {
+            throw new GeneralException(ErrorCode.BAD_REQUEST, "GitHub Pages 연결 확인 중 네트워크 오류가 발생했습니다.");
+        } catch (InterruptedException exception) {
+            Thread.currentThread().interrupt();
+            throw new GeneralException(ErrorCode.BAD_REQUEST, "GitHub Pages 연결 확인이 중단되었습니다.");
+        }
+    }
+
     private String fetchCurrentSha(String repositoryFullName, String branchName, String filePath) throws IOException, InterruptedException {
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(contentsUri(repositoryFullName, filePath, branchName))
@@ -105,6 +156,23 @@ public class GitHubContentsClient {
         }
         JsonNode root = objectMapper.readTree(response.body());
         return root.path("sha").asText(null);
+    }
+
+    private JsonNode getJson(URI uri) throws IOException, InterruptedException {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(uri)
+                .timeout(Duration.ofSeconds(20))
+                .header("Accept", "application/vnd.github+json")
+                .header("Authorization", "Bearer " + githubToken)
+                .header("X-GitHub-Api-Version", "2022-11-28")
+                .GET()
+                .build();
+
+        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+        if (response.statusCode() < 200 || response.statusCode() >= 300) {
+            throw new GeneralException(ErrorCode.BAD_REQUEST, "GitHub API 연결 확인에 실패했습니다. status=" + response.statusCode());
+        }
+        return objectMapper.readTree(response.body());
     }
 
     private URI contentsUri(String repositoryFullName, String filePath, String branchName) {
@@ -136,5 +204,25 @@ public class GitHubContentsClient {
         if (repositoryFullName == null || repositoryFullName.isBlank() || !repositoryFullName.contains("/")) {
             throw new GeneralException(ErrorCode.BAD_REQUEST, "GitHub Pages 저장소 full name이 올바르지 않습니다.");
         }
+    }
+
+    private String normalizeContentRootPath(String contentRootPath) {
+        if (contentRootPath == null || contentRootPath.isBlank()) {
+            return null;
+        }
+        String normalized = contentRootPath.trim()
+                .replace("\\", "/")
+                .replaceAll("^/+", "")
+                .replaceAll("/+$", "");
+        return normalized.isBlank() ? null : normalized;
+    }
+
+    public record GitHubConnectionCheckResult(
+            String repositoryUrl,
+            String branchUrl,
+            String contentRootUrl,
+            List<String> checkedItems,
+            List<String> warnings
+    ) {
     }
 }

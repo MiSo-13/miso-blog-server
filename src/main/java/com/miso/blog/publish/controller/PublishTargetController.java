@@ -2,6 +2,7 @@ package com.miso.blog.publish.controller;
 
 import com.miso.blog.common.api.ApiDataResponse;
 import com.miso.blog.publish.dto.CreatePublishTargetRequest;
+import com.miso.blog.publish.dto.GitHubPagesConnectionTestResponse;
 import com.miso.blog.publish.dto.PublishStrategyResponse;
 import com.miso.blog.publish.dto.PublishTargetResponse;
 import com.miso.blog.publish.dto.UpdatePublishTargetRequest;
@@ -58,5 +59,11 @@ public class PublishTargetController {
             @Valid @RequestBody UpdatePublishTargetRequest request
     ) {
         return ApiDataResponse.ok(publishTargetService.updateTarget(targetId, request));
+    }
+
+    @PostMapping("/{targetId}/test-github-pages")
+    @Operation(summary = "GitHub Pages 발행 설정 연결 테스트", description = "GitHub token, repository, branch, contentRootPath 접근 가능 여부를 확인합니다.")
+    public ApiDataResponse<GitHubPagesConnectionTestResponse> testGitHubPagesConnection(@PathVariable Long targetId) {
+        return ApiDataResponse.ok(publishTargetService.testGitHubPagesConnection(targetId));
     }
 }

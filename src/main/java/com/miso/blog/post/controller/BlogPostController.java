@@ -5,6 +5,7 @@ import com.miso.blog.post.dto.BlogPostQualityImproveRequest;
 import com.miso.blog.post.dto.BlogPostQualityImproveResponse;
 import com.miso.blog.post.dto.BlogPostResponse;
 import com.miso.blog.post.dto.BlogPostSummaryResponse;
+import com.miso.blog.post.dto.BlogPostVersionDiffResponse;
 import com.miso.blog.post.dto.BlogPostVersionResponse;
 import com.miso.blog.post.dto.CreateGeneralBlogPostRequest;
 import com.miso.blog.post.dto.CreateBlogPostRequest;
@@ -17,6 +18,7 @@ import com.miso.blog.post.service.GeneralBlogPostService;
 import com.miso.blog.post.service.BlogPostQualityImproveService;
 import com.miso.blog.post.service.BlogPostRevisionService;
 import com.miso.blog.post.service.BlogPostQualityReviewService;
+import com.miso.blog.post.service.BlogPostVersionDiffService;
 import com.miso.blog.publish.dto.ExportVelogMarkdownRequest;
 import com.miso.blog.publish.dto.ExportVelogMarkdownResponse;
 import com.miso.blog.publish.dto.PublishGithubPagesRequest;
@@ -33,6 +35,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -47,6 +50,7 @@ public class BlogPostController {
     private final BlogPostRevisionService blogPostRevisionService;
     private final BlogPostQualityReviewService blogPostQualityReviewService;
     private final BlogPostQualityImproveService blogPostQualityImproveService;
+    private final BlogPostVersionDiffService blogPostVersionDiffService;
     private final BlogPostPublishService blogPostPublishService;
     private final VelogExportService velogExportService;
 
@@ -78,6 +82,16 @@ public class BlogPostController {
     @Operation(summary = "블로그 글 버전 이력 조회")
     public ApiDataResponse<List<BlogPostVersionResponse>> getVersions(@PathVariable Long blogPostId) {
         return ApiDataResponse.ok(blogPostService.getVersions(blogPostId));
+    }
+
+    @GetMapping("/{blogPostId}/versions/diff")
+    @Operation(summary = "블로그 글 버전 diff 조회", description = "수정 전후 버전을 라인 단위로 비교합니다. 버전 번호를 생략하면 최신 버전과 직전 버전을 비교합니다.")
+    public ApiDataResponse<BlogPostVersionDiffResponse> getVersionDiff(
+            @PathVariable Long blogPostId,
+            @RequestParam(required = false) Integer fromVersionNo,
+            @RequestParam(required = false) Integer toVersionNo
+    ) {
+        return ApiDataResponse.ok(blogPostVersionDiffService.diff(blogPostId, fromVersionNo, toVersionNo));
     }
 
     @PatchMapping("/{blogPostId}")

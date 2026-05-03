@@ -5,6 +5,7 @@ import com.miso.blog.common.exception.GeneralException;
 import com.miso.blog.publish.code.PublishChannel;
 import com.miso.blog.publish.code.PublishRole;
 import com.miso.blog.publish.dto.CreatePublishTargetRequest;
+import com.miso.blog.publish.dto.GitHubPagesConnectionTestResponse;
 import com.miso.blog.publish.dto.PublishStrategyResponse;
 import com.miso.blog.publish.dto.PublishTargetResponse;
 import com.miso.blog.publish.dto.UpdatePublishTargetRequest;
@@ -14,12 +15,14 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class PublishTargetService {
     private final PublishTargetRepository publishTargetRepository;
+    private final GitHubContentsClient gitHubContentsClient;
 
     @Transactional
     public PublishTargetResponse createTarget(CreatePublishTargetRequest request) {
@@ -52,6 +55,38 @@ public class PublishTargetService {
                 PublishChannel.VELOG.name(),
                 "서버 DB의 Markdown을 원본으로 저장하고, GitHub Pages에는 Markdown 파일 commit, Velog에는 노출용 재발행을 목표로 합니다.",
                 getTargets()
+        );
+    }
+
+    @Transactional(readOnly = true)
+    public GitHubPagesConnectionTestResponse testGitHubPagesConnection(Long targetId) {
+        PublishTargetEntity target = getTargetOrThrow(targetId);
+        if (target.getChannel() != PublishChannel.GITHUB_PAGES) {
+            throw new GeneralException(ErrorCode.BAD_REQUEST, "GitHub Pages 발행 대상만 연결 테스트를 실행할 수 있습니다.");
+        }
+        validateGitHubPagesTarget(target);
+
+        GitHubContentsClient.GitHubConnectionCheckResult result = gitHubContentsClient.checkConnection(
+                target.getRepositoryFullName(),
+                target.getBranchName(),
+                target.getContentRootPath()
+        );
+
+        return new GitHubPagesConnectionTestResponse(
+                target.getId(),
+                target.getRepositoryFullName(),
+                target.getBranchName(),
+                target.getContentRootPath(),
+                true,
+                result.checkedItems(),
+                result.warnings(),
+                result.repositoryUrl(),
+                result.branchUrl(),
+                result.contentRootUrl(),
+                result.warnings().isEmpty()
+                        ? "GitHub Pages 발행 설정 연결이 정상입니다."
+                        : "GitHub 저장소와 브랜치는 확인됐지만 일부 경고가 있습니다.",
+                LocalDateTime.now()
         );
     }
 
@@ -99,6 +134,18 @@ public class PublishTargetService {
     private PublishTargetEntity getTargetOrThrow(Long targetId) {
         return publishTargetRepository.findById(targetId)
                 .orElseThrow(() -> new GeneralException(ErrorCode.NOT_FOUND, "발행 대상을 찾을 수 없습니다."));
+    }
+
+    private void validateGitHubPagesTarget(PublishTargetEntity target) {
+        if (!target.isActive()) {
+            throw new GeneralException(ErrorCode.CONFLICT, "비활성화된 발행 대상입니다.");
+        }
+        if (target.getRepositoryFullName() == null || target.getRepositoryFullName().isBlank()) {
+            throw new GeneralException(ErrorCode.BAD_REQUEST, "GitHub Pages repositoryFullName을 먼저 설정하세요.");
+        }
+        if (target.getBranchName() == null || target.getBranchName().isBlank()) {
+            throw new GeneralException(ErrorCode.BAD_REQUEST, "GitHub Pages branchName을 먼저 설정하세요.");
+        }
     }
 
     private String defaultText(String value, String defaultValue) {
