@@ -68,6 +68,7 @@ Windows PowerShell에서는 다음 명령을 사용할 수 있습니다.
 - Async general AI blog draft: `POST /api/ai-jobs/blog-posts/draft/ai-general`
 - Async AI blog revision: `POST /api/ai-jobs/blog-posts/{blogPostId}/revise/ai`
 - Async AI blog quality improve: `POST /api/ai-jobs/blog-posts/{blogPostId}/quality-improve/ai`
+- Local repository defaults: `GET /api/local-repositories/defaults`
 - Local repositories: `POST /api/local-repositories`
 - Local analysis: `POST /api/local-repositories/{repositoryId}/analyze`
 - Local write: `POST /api/local-repositories/analysis-reports/{reportId}/write-blog-post`
@@ -98,6 +99,7 @@ Windows PowerShell에서는 다음 명령을 사용할 수 있습니다.
 - `application-private.yml`은 계속 git에 올리지 않고, 실제 키는 로컬 private 설정 또는 환경 변수에서만 관리합니다.
 - GitHub Pages 발행용 GitHub token은 대상 저장소 contents write 권한이 필요합니다.
 - GitHub 계정명은 private 설정의 `github.owner`에 넣고, 저장소와 브랜치는 웹에서 목록 조회 후 선택할 수 있습니다.
+- 자주 분석할 로컬 프로젝트 경로는 private 설정의 `blog.local-repositories.defaults`에 후보로 넣고, 웹에서 선택해 등록할 수 있습니다.
 - 업로드 이미지는 기본적으로 `uploads/blog-media`에 저장되며 git에 올라가지 않습니다.
 
 ## 문서

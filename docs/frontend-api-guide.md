@@ -144,6 +144,30 @@ POST /api/ai-jobs/{jobId}/retry
 ### 로컬 저장소 등록
 
 ```http
+GET /api/local-repositories/defaults
+```
+
+`application-private.yml`의 `blog.local-repositories.defaults`에 적힌 로컬 프로젝트 후보를 반환합니다. 프론트에서는 이 목록을 먼저 보여주고, 사용자가 선택하면 `POST /api/local-repositories`로 등록하면 됩니다. `readable=false`인 항목은 서버가 해당 경로를 Git 저장소로 읽지 못한 상태이므로 등록 버튼을 비활성화하고 `message`를 보여주세요.
+
+응답 예시:
+
+```json
+[
+  {
+    "name": "magi-platform",
+    "localPath": "C:\\pjt\\magi-platform",
+    "normalizedLocalPath": "C:\\pjt\\magi-platform",
+    "defaultBranch": "main",
+    "description": "MAGI 참고 프로젝트",
+    "active": true,
+    "readable": true,
+    "registered": false,
+    "message": "읽을 수 있는 로컬 Git 저장소입니다."
+  }
+]
+```
+
+```http
 POST /api/local-repositories
 ```
 
@@ -659,6 +683,7 @@ GET /api/admin/openai/estimate?model=gpt-4.1-mini&inputTokens=10000&cachedInputT
 ## 프론트 구현 메모
 
 - 기본 분석 버튼은 `LOCAL_ONLY`로 둡니다.
+- 로컬 저장소 화면은 `GET /api/local-repositories/defaults` 후보를 먼저 보여주고, 사용자가 고른 항목을 기존 등록 API로 저장하게 만듭니다.
 - `OPENAI` 분석은 “마스킹된 코드 요약이 외부 AI로 전송됩니다” 확인 후 실행하게 만듭니다.
 - 분석 결과 화면은 키워드, 글감 후보 카드, 추천 초안 Markdown 미리보기로 나누면 좋습니다.
 - 사용자가 키워드와 글감 후보를 선택하면 `write-blog-post`를 호출해 실제 블로그 초안을 생성합니다.
