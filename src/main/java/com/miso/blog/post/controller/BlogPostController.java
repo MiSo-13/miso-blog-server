@@ -4,9 +4,11 @@ import com.miso.blog.common.api.ApiDataResponse;
 import com.miso.blog.post.dto.BlogPostResponse;
 import com.miso.blog.post.dto.BlogPostSummaryResponse;
 import com.miso.blog.post.dto.BlogPostVersionResponse;
+import com.miso.blog.post.dto.CreateGeneralBlogPostRequest;
 import com.miso.blog.post.dto.CreateBlogPostRequest;
 import com.miso.blog.post.dto.UpdateBlogPostRequest;
 import com.miso.blog.post.service.BlogPostService;
+import com.miso.blog.post.service.GeneralBlogPostService;
 import com.miso.blog.publish.dto.ExportVelogMarkdownRequest;
 import com.miso.blog.publish.dto.ExportVelogMarkdownResponse;
 import com.miso.blog.publish.dto.PublishGithubPagesRequest;
@@ -33,6 +35,7 @@ import java.util.List;
 @Tag(name = "블로그 글", description = "AI 또는 수동으로 생성한 Markdown 블로그 글을 관리합니다.")
 public class BlogPostController {
     private final BlogPostService blogPostService;
+    private final GeneralBlogPostService generalBlogPostService;
     private final BlogPostPublishService blogPostPublishService;
     private final VelogExportService velogExportService;
 
@@ -40,6 +43,12 @@ public class BlogPostController {
     @Operation(summary = "수동 블로그 초안 생성", description = "Git/AI 연동 전에도 Markdown 초안을 저장할 수 있습니다.")
     public ApiDataResponse<BlogPostResponse> createManualDraft(@Valid @RequestBody CreateBlogPostRequest request) {
         return ApiDataResponse.ok(blogPostService.createDraft(request));
+    }
+
+    @PostMapping("/draft/ai-general")
+    @Operation(summary = "일반 블로그 AI 초안 생성", description = "사진 설명, 필수 문구, 메모, 키워드를 기반으로 맛집/카페/여행 등 일반 블로그 초안을 생성합니다.")
+    public ApiDataResponse<BlogPostResponse> createGeneralAiDraft(@Valid @RequestBody CreateGeneralBlogPostRequest request) {
+        return ApiDataResponse.ok(generalBlogPostService.createAiDraft(request));
     }
 
     @GetMapping
