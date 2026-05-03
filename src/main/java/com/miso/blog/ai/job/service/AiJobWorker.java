@@ -27,7 +27,7 @@ public class AiJobWorker {
             BlogPostResponse response = generalBlogPostService.createAiDraft(request);
             aiJobStateService.markSucceeded(jobId, response, response.id());
         } catch (Exception exception) {
-            aiJobStateService.markFailed(jobId, exception.getMessage());
+            aiJobStateService.markFailed(jobId, exception);
         }
     }
 
@@ -38,7 +38,7 @@ public class AiJobWorker {
             BlogPostResponse response = blogPostRevisionService.reviseWithAi(blogPostId, request);
             aiJobStateService.markSucceeded(jobId, response, response.id());
         } catch (Exception exception) {
-            aiJobStateService.markFailed(jobId, exception.getMessage());
+            aiJobStateService.markFailed(jobId, exception);
         }
     }
 
@@ -49,7 +49,7 @@ public class AiJobWorker {
             BlogPostQualityImproveResponse response = blogPostQualityImproveService.improve(blogPostId, request);
             aiJobStateService.markSucceeded(jobId, response, response.blogPostId());
         } catch (Exception exception) {
-            aiJobStateService.markFailed(jobId, exception.getMessage());
+            aiJobStateService.markFailed(jobId, exception);
         }
     }
 }

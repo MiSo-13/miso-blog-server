@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class AiJobStateService {
     private final AiJobRepository aiJobRepository;
     private final ObjectMapper objectMapper;
+    private final AiJobFailureClassifier aiJobFailureClassifier;
 
     @Transactional
     public void markRunning(Long jobId) {
@@ -30,9 +31,16 @@ public class AiJobStateService {
     }
 
     @Transactional
-    public void markFailed(Long jobId, String errorMessage) {
+    public void markFailed(Long jobId, Exception exception) {
         AiJobEntity job = getJobOrThrow(jobId);
-        job.markFailed(truncate(errorMessage == null || errorMessage.isBlank() ? "알 수 없는 오류" : errorMessage, 2000));
+        AiJobFailure failure = aiJobFailureClassifier.classify(exception);
+        job.markFailed(new AiJobFailure(
+                failure.code(),
+                truncate(failure.message(), 1000),
+                truncate(failure.detailMessage(), 2000),
+                failure.retryable(),
+                truncate(failure.actionGuide(), 1000)
+        ));
     }
 
     @Transactional(readOnly = true)
@@ -54,7 +62,7 @@ public class AiJobStateService {
     }
 
     private String truncate(String value, int maxLength) {
-        if (value.length() <= maxLength) {
+        if (value == null || value.length() <= maxLength) {
             return value;
         }
         return value.substring(0, maxLength);

@@ -61,4 +61,10 @@ public class AiJobController {
     public ApiDataResponse<AiJobResponse> getJob(@PathVariable Long jobId) {
         return ApiDataResponse.ok(aiJobService.getJob(jobId));
     }
+
+    @PostMapping("/{jobId}/retry")
+    @Operation(summary = "실패한 AI 작업 재시도")
+    public ApiDataResponse<AiJobResponse> retryJob(@PathVariable Long jobId) {
+        return ApiDataResponse.ok(aiJobService.retryJob(jobId));
+    }
 }
