@@ -82,8 +82,10 @@ Windows PowerShell에서는 다음 명령을 사용할 수 있습니다.
 - AI blog quality improve: `POST /api/blog-posts/{blogPostId}/quality-improve/ai`
 - Blog posts: `GET /api/blog-posts`
 - Blog post detail: `GET /api/blog-posts/{blogPostId}`
+- Blog post version diff: `GET /api/blog-posts/{blogPostId}/versions/diff`
 - Publish strategy: `GET /api/publish-targets/strategy`
 - Default publish targets: `POST /api/publish-targets/defaults`
+- GitHub Pages connection test: `POST /api/publish-targets/{targetId}/test-github-pages`
 - GitHub Pages publish: `POST /api/blog-posts/{blogPostId}/publish/github-pages`
 - Velog export: `POST /api/blog-posts/{blogPostId}/export/velog`
 

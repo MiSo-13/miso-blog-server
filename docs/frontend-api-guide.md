@@ -388,6 +388,7 @@ POST /api/blog-posts/draft/ai-general
 GET /api/blog-posts
 GET /api/blog-posts/{blogPostId}
 GET /api/blog-posts/{blogPostId}/versions
+GET /api/blog-posts/{blogPostId}/versions/diff
 PATCH /api/blog-posts/{blogPostId}
 POST /api/blog-posts/{blogPostId}/revise/ai
 POST /api/blog-posts/{blogPostId}/quality-review/ai
@@ -429,6 +430,39 @@ POST /api/blog-posts/{blogPostId}/revise/ai
 ```
 
 응답은 수정된 `BlogPostResponse`입니다. 서버는 기존 글을 새 버전으로 저장하므로 `GET /api/blog-posts/{blogPostId}/versions`에서 이전 초안과 AI 수정본을 비교할 수 있습니다.
+
+### 수정 전후 diff
+
+```http
+GET /api/blog-posts/{blogPostId}/versions/diff?fromVersionNo=1&toVersionNo=2
+```
+
+`fromVersionNo`, `toVersionNo`를 생략하면 최신 버전과 직전 버전을 비교합니다. 프론트에서는 `sections[].fieldName` 별로 제목, 요약, 본문, 태그 변경을 나눠 보여주고, `lines[].type`이 `INSERT`면 추가, `DELETE`면 삭제, `EQUAL`이면 변경 없는 줄로 렌더링하면 됩니다.
+
+응답 예시:
+
+```json
+{
+  "blogPostId": 6,
+  "fromVersionNo": 2,
+  "toVersionNo": 3,
+  "addedLineCount": 19,
+  "deletedLineCount": 27,
+  "changed": true,
+  "sections": [
+    {
+      "fieldName": "contentMarkdown",
+      "changed": true,
+      "addedLineCount": 17,
+      "deletedLineCount": 25,
+      "lines": [
+        {"type": "DELETE", "oldLineNo": 1, "newLineNo": null, "text": "이전 문장"},
+        {"type": "INSERT", "oldLineNo": null, "newLineNo": 1, "text": "수정된 문장"}
+      ]
+    }
+  ]
+}
+```
 
 발행된 글은 AI 수정으로 덮어쓸 수 없습니다. 발행 후 수정이 필요하면 새 글 또는 별도 수정 발행 정책을 두는 것이 안전합니다.
 
@@ -515,6 +549,7 @@ POST /api/publish-targets/defaults
 GET /api/publish-targets
 POST /api/publish-targets
 PATCH /api/publish-targets/{targetId}
+POST /api/publish-targets/{targetId}/test-github-pages
 ```
 
 GitHub Pages 대상에는 최소한 다음 값이 필요합니다.
@@ -532,6 +567,35 @@ GitHub Pages 대상에는 최소한 다음 값이 필요합니다.
   "active": true
 }
 ```
+
+### GitHub Pages 연결 테스트
+
+```http
+POST /api/publish-targets/{targetId}/test-github-pages
+```
+
+실제 발행 전에 GitHub token, repositoryFullName, branchName, contentRootPath 접근 가능 여부를 확인합니다. 이 API는 GitHub에 파일을 쓰지 않고 읽기 요청만 수행합니다.
+
+성공 응답 예시:
+
+```json
+{
+  "targetId": 1,
+  "repositoryFullName": "user/user.github.io",
+  "branchName": "main",
+  "contentRootPath": "_posts",
+  "success": true,
+  "checkedItems": ["repository", "branch", "contentRootPath"],
+  "warnings": [],
+  "repositoryUrl": "https://github.com/user/user.github.io",
+  "branchUrl": "https://github.com/user/user.github.io/tree/main",
+  "contentRootUrl": "https://github.com/user/user.github.io/tree/main/_posts",
+  "message": "GitHub Pages 발행 설정 연결이 정상입니다.",
+  "checkedAt": "2026-05-03T12:40:00"
+}
+```
+
+프론트에서는 발행 설정 화면에 테스트 버튼을 두고, 성공 전까지 실제 발행 버튼을 비활성화하는 것을 권장합니다. 현재 target에 `repositoryFullName`이 비어 있으면 `GitHub Pages repositoryFullName을 먼저 설정하세요.` 메시지가 내려옵니다.
 
 ## OpenAI 운영 API
 
