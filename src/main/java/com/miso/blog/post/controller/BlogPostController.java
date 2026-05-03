@@ -7,8 +7,10 @@ import com.miso.blog.post.dto.BlogPostVersionResponse;
 import com.miso.blog.post.dto.CreateGeneralBlogPostRequest;
 import com.miso.blog.post.dto.CreateBlogPostRequest;
 import com.miso.blog.post.dto.UpdateBlogPostRequest;
+import com.miso.blog.post.dto.ReviseBlogPostWithAiRequest;
 import com.miso.blog.post.service.BlogPostService;
 import com.miso.blog.post.service.GeneralBlogPostService;
+import com.miso.blog.post.service.BlogPostRevisionService;
 import com.miso.blog.publish.dto.ExportVelogMarkdownRequest;
 import com.miso.blog.publish.dto.ExportVelogMarkdownResponse;
 import com.miso.blog.publish.dto.PublishGithubPagesRequest;
@@ -36,6 +38,7 @@ import java.util.List;
 public class BlogPostController {
     private final BlogPostService blogPostService;
     private final GeneralBlogPostService generalBlogPostService;
+    private final BlogPostRevisionService blogPostRevisionService;
     private final BlogPostPublishService blogPostPublishService;
     private final VelogExportService velogExportService;
 
@@ -76,6 +79,15 @@ public class BlogPostController {
             @Valid @RequestBody UpdateBlogPostRequest request
     ) {
         return ApiDataResponse.ok(blogPostService.updateDraft(blogPostId, request));
+    }
+
+    @PostMapping("/{blogPostId}/revise/ai")
+    @Operation(summary = "AI 추가 요청 기반 블로그 글 수정", description = "현재 초안을 사용자의 추가 요청에 맞춰 다시 작성하고 새 버전으로 저장합니다.")
+    public ApiDataResponse<BlogPostResponse> reviseWithAi(
+            @PathVariable Long blogPostId,
+            @Valid @RequestBody ReviseBlogPostWithAiRequest request
+    ) {
+        return ApiDataResponse.ok(blogPostRevisionService.reviseWithAi(blogPostId, request));
     }
 
     @PostMapping("/{blogPostId}/review-ready")
