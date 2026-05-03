@@ -4,6 +4,7 @@ import com.miso.blog.common.api.ApiErrorResponse;
 import com.miso.blog.common.code.ErrorCode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.context.request.async.AsyncRequestNotUsableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -31,6 +32,12 @@ public class ApiExceptionHandler {
         return ResponseEntity
                 .badRequest()
                 .body(ApiErrorResponse.of(ErrorCode.BAD_REQUEST.name(), message));
+    }
+
+    @ExceptionHandler(AsyncRequestNotUsableException.class)
+    public void handleAsyncRequestNotUsableException(AsyncRequestNotUsableException exception) {
+        // 클라이언트나 프록시가 먼저 연결을 끊은 경우라 응답 body를 다시 쓰지 않습니다.
+        log.warn("응답 전송 전에 클라이언트 연결이 종료되었습니다. message={}", exception.getMessage());
     }
 
     @ExceptionHandler(Exception.class)
