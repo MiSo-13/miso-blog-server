@@ -11,6 +11,7 @@ import com.miso.blog.ai.repository.AiUsageLogRepository;
 import com.miso.blog.common.code.ErrorCode;
 import com.miso.blog.common.exception.GeneralException;
 import com.miso.blog.common.security.SecretMaskingService;
+import com.miso.blog.naver.service.NaverBlogTrendContextService;
 import com.miso.blog.post.dto.BlogPostQualityReviewRequest;
 import com.miso.blog.post.dto.BlogPostQualityReviewResponse;
 import com.miso.blog.post.entity.BlogPostEntity;
@@ -42,6 +43,7 @@ public class OpenAiBlogQualityReviewer {
     private final SecretMaskingService secretMaskingService;
     private final BlogPostMemoryContextService blogPostMemoryContextService;
     private final BlogReferenceContextService blogReferenceContextService;
+    private final NaverBlogTrendContextService naverBlogTrendContextService;
     private final HttpClient httpClient = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(10))
             .build();
@@ -78,6 +80,7 @@ public class OpenAiBlogQualityReviewer {
                                      strengths, issues, unsupportedClaims, aiLikePhrases,
                                      monetizationSuggestions, referenceFeedback, referenceSentenceSuggestions,
                                      naverBlogFeedback, naverBlogTitleSuggestions, naverBlogStructureSuggestions,
+                                     naverTrendFeedback, naverTrendTitlePatterns, naverTrendStructurePatterns,
                                      revisionInstruction
 
                                      점수는 0~100 정수다. publishReady는 사람 검토 없이 발행해도 안전한 수준일 때만 true다.
@@ -90,6 +93,10 @@ public class OpenAiBlogQualityReviewer {
                                      사진 설명, 독자 도움성, 복사/중복 느낌 여부를 구체적으로 평가한다.
                                      naverBlogTitleSuggestions에는 네이버 블로그용 제목 후보를 2~4개 제안한다.
                                      naverBlogStructureSuggestions에는 네이버 블로그에서 읽기 좋은 소제목 순서와 보완 섹션을 제안한다.
+                                     naverTrendFeedback에는 네이버 블로그 상위 글 참고 자료와 현재 글을 비교해,
+                                     현재 글이 놓친 검색 의도, 정보 배치, 도입부/사진 흐름, 과도한 모방 위험을 구체적으로 적는다.
+                                     naverTrendTitlePatterns에는 상위 글에서 관찰한 제목 패턴을 그대로 베끼지 않는 전략으로 정리한다.
+                                     naverTrendStructurePatterns에는 상위 글에서 관찰한 구조/사진/정보 배치 패턴을 작성 전략으로 정리한다.
                                      일반 블로그가 아닌 개발 블로그라면 naverBlog 계열 필드는 빈 배열로 두거나, 제목/구조 수준의 최소 제안만 한다.
                                      revisionInstruction은 POST /revise/ai에 바로 넣을 수 있는 한국어 수정 지시문으로 작성한다.
                                      """
@@ -144,6 +151,9 @@ public class OpenAiBlogQualityReviewer {
                     readStringList(result.path("naverBlogFeedback")),
                     readStringList(result.path("naverBlogTitleSuggestions")),
                     readStringList(result.path("naverBlogStructureSuggestions")),
+                    readStringList(result.path("naverTrendFeedback")),
+                    readStringList(result.path("naverTrendTitlePatterns")),
+                    readStringList(result.path("naverTrendStructurePatterns")),
                     textOrDefault(result, "revisionInstruction", ""),
                     content,
                     model
@@ -176,6 +186,9 @@ public class OpenAiBlogQualityReviewer {
                 이전 저장 글 참고:
                 %s
 
+                네이버 블로그 상위 글 참고:
+                %s
+
                  리뷰 기준:
                  - AI가 쓴 듯한 일반론, 과장된 칭찬, 반복 표현을 찾는다.
                  - 개발 블로그는 실제 구현 근거가 빈약한 기술 설명과 추상적인 결론을 찾는다.
@@ -188,6 +201,8 @@ public class OpenAiBlogQualityReviewer {
                  - 네이버 블로그 모바일 독자를 고려해 문단이 너무 길지 않은지, 소제목 흐름이 검색 의도와 맞는지 본다.
                  - 사진 또는 이미지 자리표시자가 있으면 장면을 설명하는 대체 문구가 충분한지 본다.
                  - 검색 노출만을 위한 키워드 남용, 무관한 인기 키워드, 복사한 듯한 레퍼런스 표현은 문제로 지적한다.
+                 - 네이버 블로그 상위 글 참고 자료와 현재 글을 비교해 제목, 도입부, 소제목, 사진 설명, 정보 밀도 차이를 피드백한다.
+                 - 상위 글의 원문 문장이나 경험을 베끼는 방향은 제안하지 않고, 패턴과 전략만 제안한다.
                  - Reference URLs의 실제 본문 발췌를 현재 글과 비교해 어떤 표현/구조를 배울지, 어떤 문장은 근거가 약한지 세심하게 피드백한다.
                  - 레퍼런스 문장을 길게 그대로 복사하라고 지시하지 않는다. 자연스러운 문장 구조와 관찰 포인트만 제안한다.
 
@@ -204,6 +219,7 @@ public class OpenAiBlogQualityReviewer {
                 blogPostMemoryContextService.buildRecentPostContext(blogPost.getId())
                         + "\n\nReference URLs:\n"
                         + blogReferenceContextService.buildReferenceContext(BlogReferenceType.DEVELOPMENT, BlogReferenceType.GENERAL),
+                naverBlogTrendContextService.buildTrendContext(blogPost, tags),
                 secretMaskingService.mask(blogPost.getContentMarkdown())
         );
     }

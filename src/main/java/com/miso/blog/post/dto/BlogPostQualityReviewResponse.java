@@ -21,6 +21,9 @@ public record BlogPostQualityReviewResponse(
         List<String> naverBlogFeedback,
         List<String> naverBlogTitleSuggestions,
         List<String> naverBlogStructureSuggestions,
+        List<String> naverTrendFeedback,
+        List<String> naverTrendTitlePatterns,
+        List<String> naverTrendStructurePatterns,
         String revisionInstruction,
         String rawResponse,
         String modelName

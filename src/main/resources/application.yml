@@ -42,6 +42,13 @@ blog:
     pages-custom-domain: ${GITHUB_PAGES_CUSTOM_DOMAIN:${github.pages-custom-domain:}}
     analysis:
       max-all-commits: ${GITHUB_ANALYSIS_MAX_ALL_COMMITS:${github.analysis.max-all-commits:300}}
+  naver:
+    client-id: ${NAVER_CLIENT_ID:${naver.client-id:}}
+    client-secret: ${NAVER_CLIENT_SECRET:${naver.client-secret:}}
+    blog-search-enabled: ${NAVER_BLOG_SEARCH_ENABLED:${naver.blog-search-enabled:true}}
+    blog-search-display: ${NAVER_BLOG_SEARCH_DISPLAY:${naver.blog-search-display:5}}
+    blog-search-sort: ${NAVER_BLOG_SEARCH_SORT:${naver.blog-search-sort:sim}}
+    blog-search-content-fetch-limit: ${NAVER_BLOG_SEARCH_CONTENT_FETCH_LIMIT:${naver.blog-search-content-fetch-limit:3}}
   local-repositories:
     clone-base-dir: ${BLOG_LOCAL_REPOSITORY_CLONE_BASE_DIR:/app/repositories}
     defaults: []

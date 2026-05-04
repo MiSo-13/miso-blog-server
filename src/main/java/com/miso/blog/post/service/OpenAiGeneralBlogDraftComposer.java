@@ -11,6 +11,7 @@ import com.miso.blog.ai.repository.AiUsageLogRepository;
 import com.miso.blog.common.code.ErrorCode;
 import com.miso.blog.common.exception.GeneralException;
 import com.miso.blog.common.security.SecretMaskingService;
+import com.miso.blog.naver.service.NaverBlogTrendContextService;
 import com.miso.blog.post.code.GeneralBlogLength;
 import com.miso.blog.post.dto.CreateGeneralBlogPostRequest;
 import com.miso.blog.post.dto.GeneratedBlogDraft;
@@ -43,6 +44,7 @@ public class OpenAiGeneralBlogDraftComposer {
     private final SecretMaskingService secretMaskingService;
     private final BlogPostMemoryContextService blogPostMemoryContextService;
     private final BlogReferenceContextService blogReferenceContextService;
+    private final NaverBlogTrendContextService naverBlogTrendContextService;
     private final HttpClient httpClient = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(10))
             .build();
@@ -77,6 +79,7 @@ public class OpenAiGeneralBlogDraftComposer {
                                      summary는 네이버 검색 스니펫처럼 글의 핵심을 2~3문장으로 요약한다.
                                      contentMarkdown은 네이버 블로그에 복사하기 좋은 Markdown 초안이어야 하며, H2 소제목과 짧은 문단을 포함한다.
                                      contentMarkdown 첫 줄에 제목을 #으로 다시 반복하지 말고, 자연스러운 도입 문단이나 ## 소제목으로 시작한다.
+                                     네이버 블로그 상위 글 참고 자료가 있으면 제목 패턴, 도입부, 소제목 흐름, 사진/정보 배치만 참고한다.
                                      사용자가 요청한 목표 길이를 반드시 지킨다. LONG은 짧은 요약문이 아니라 충분히 확장된 본문이어야 한다.
                                      사용자가 준 메모, 필수 문구, 키워드, 사진 설명을 최우선 근거로 삼는다.
                                      모르는 사실, 방문하지 않은 경험, 가격, 영업시간, 메뉴, 위치 정보는 단정하지 않는다.
@@ -157,6 +160,9 @@ public class OpenAiGeneralBlogDraftComposer {
                 이전 저장 글 참고:
                 %s
 
+                네이버 블로그 상위 글 참고:
+                %s
+
                 사용자 메모:
                 %s
 
@@ -185,7 +191,9 @@ public class OpenAiGeneralBlogDraftComposer {
                  - 제공되지 않은 사실은 “그랬다”고 단정하지 않는다.
                  - Reference URLs에 실제 본문 발췌가 있으면 문장 흐름, 소제목 구조, 관찰 포인트를 참고하되 긴 문장을 그대로 베끼지 않는다.
                  - 레퍼런스에서 확인한 내용과 사용자 메모를 구분하고, 사용자 경험처럼 꾸며내지 않는다.
-                 """.formatted(
+                 - 네이버 블로그 상위 글 참고 자료는 현재 검색 상위 노출 글의 경향을 파악하기 위한 자료다. 원문 문장이나 경험을 복사하지 않는다.
+                 - 상위 글에 자주 나오는 정보라도 사용자가 제공하지 않은 가격, 메뉴, 웨이팅, 예약, 효능, 방문 경험은 현재 글의 사실처럼 쓰지 않는다.
+                  """.formatted(
                 request.category(),
                 valueOrDefault(request.titleHint(), "(없음)"),
                 valueOrDefault(request.placeName(), "(없음)"),
@@ -201,6 +209,7 @@ public class OpenAiGeneralBlogDraftComposer {
                 blogPostMemoryContextService.buildRecentPostContext(null)
                         + "\n\nReference URLs:\n"
                         + blogReferenceContextService.buildReferenceContext(BlogReferenceType.GENERAL),
+                naverBlogTrendContextService.buildTrendContext(request),
                 secretMaskingService.mask(valueOrDefault(request.memo(), "(없음)"))
         );
     }

@@ -146,6 +146,15 @@ public class BlogPostQualityImproveService {
                  네이버 블로그 구조 보완:
                  %s
 
+                 네이버 상위 글 비교 피드백:
+                 %s
+
+                 네이버 상위 글 제목 패턴:
+                 %s
+
+                 네이버 상위 글 구조 패턴:
+                 %s
+
                  수정 지시:
                  %s
 
@@ -158,6 +167,7 @@ public class BlogPostQualityImproveService {
                  - 광고 문구처럼 과장하지 말고 사람이 쓴 후기나 개발 기록처럼 구체적으로 정리하세요.
                  - 일반 블로그는 네이버 블로그에 붙여넣기 좋게 짧은 문단, 자연스러운 키워드, 구체적인 사진 설명, 과하지 않은 제목으로 다듬으세요.
                  - 네이버 검색 노출만을 위한 키워드 반복이나 무관한 인기 키워드는 넣지 마세요.
+                 - 네이버 상위 글 패턴은 제목/구조 전략으로만 참고하고, 원문 문장이나 타인의 경험은 복사하지 마세요.
                  """.formatted(
                 round,
                 valueOrDefault(request.minimumHumanNaturalnessScore(), 82),
@@ -174,6 +184,9 @@ public class BlogPostQualityImproveService {
                 review.naverBlogFeedback(),
                 review.naverBlogTitleSuggestions(),
                 review.naverBlogStructureSuggestions(),
+                review.naverTrendFeedback(),
+                review.naverTrendTitlePatterns(),
+                review.naverTrendStructurePatterns(),
                 baseInstruction
         );
     }
