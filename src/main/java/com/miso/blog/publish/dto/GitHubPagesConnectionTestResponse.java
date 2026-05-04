@@ -9,6 +9,8 @@ public record GitHubPagesConnectionTestResponse(
         String branchName,
         String contentRootPath,
         boolean success,
+        boolean branchExists,
+        boolean jekyllReady,
         List<String> checkedItems,
         List<String> warnings,
         String repositoryUrl,

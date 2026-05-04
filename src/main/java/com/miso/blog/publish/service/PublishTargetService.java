@@ -6,10 +6,15 @@ import com.miso.blog.publish.code.PublishChannel;
 import com.miso.blog.publish.code.PublishRole;
 import com.miso.blog.publish.dto.CreatePublishTargetRequest;
 import com.miso.blog.publish.dto.GitHubBranchOptionResponse;
+import com.miso.blog.publish.dto.GitHubContentCommitResult;
+import com.miso.blog.publish.dto.GitHubContentFile;
 import com.miso.blog.publish.dto.GitHubPagesConnectionTestResponse;
 import com.miso.blog.publish.dto.GitHubRepositoryOptionResponse;
+import com.miso.blog.publish.dto.JekyllScaffoldFileResponse;
 import com.miso.blog.publish.dto.PublishStrategyResponse;
 import com.miso.blog.publish.dto.PublishTargetResponse;
+import com.miso.blog.publish.dto.SeedJekyllSiteRequest;
+import com.miso.blog.publish.dto.SeedJekyllSiteResponse;
 import com.miso.blog.publish.dto.UpdatePublishTargetRequest;
 import com.miso.blog.publish.entity.PublishTargetEntity;
 import com.miso.blog.publish.repository.PublishTargetRepository;
@@ -18,7 +23,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -26,6 +35,7 @@ public class PublishTargetService {
     private final PublishTargetRepository publishTargetRepository;
     private final GitHubContentsClient gitHubContentsClient;
     private final GitHubPagesTargetDefaults gitHubPagesTargetDefaults;
+    private final JekyllSiteScaffoldFormatter jekyllSiteScaffoldFormatter;
 
     @Transactional
     public PublishTargetResponse createTarget(CreatePublishTargetRequest request) {
@@ -87,6 +97,16 @@ public class PublishTargetService {
                 branchName,
                 contentRootPath
         );
+        List<String> warnings = new ArrayList<>(result.warnings());
+        boolean jekyllReady = result.branchExists();
+        if (result.branchExists()) {
+            for (String filePath : jekyllSiteScaffoldFormatter.requiredFilePaths()) {
+                if (!gitHubContentsClient.contentExists(repositoryFullName, branchName, filePath)) {
+                    jekyllReady = false;
+                    warnings.add("Jekyll 기본 파일이 없습니다: " + filePath + ". 필요하면 Jekyll 초기화 API를 실행하세요.");
+                }
+            }
+        }
 
         return new GitHubPagesConnectionTestResponse(
                 target.getId(),
@@ -94,14 +114,82 @@ public class PublishTargetService {
                 branchName,
                 contentRootPath,
                 true,
+                result.branchExists(),
+                jekyllReady,
                 result.checkedItems(),
-                result.warnings(),
+                warnings,
                 result.repositoryUrl(),
                 result.branchUrl(),
                 result.contentRootUrl(),
-                result.warnings().isEmpty()
+                warnings.isEmpty()
                         ? "GitHub Pages 발행 설정 연결이 정상입니다."
-                        : "GitHub 저장소와 브랜치는 확인됐지만 일부 경고가 있습니다.",
+                        : "GitHub 저장소는 확인됐지만 일부 경고가 있습니다.",
+                LocalDateTime.now()
+        );
+    }
+
+    public SeedJekyllSiteResponse seedJekyllSite(Long targetId, SeedJekyllSiteRequest request) {
+        PublishTargetEntity target = getTargetOrThrow(targetId);
+        if (target.getChannel() != PublishChannel.GITHUB_PAGES) {
+            throw new GeneralException(ErrorCode.BAD_REQUEST, "GitHub Pages 발행 대상만 Jekyll 초기화를 실행할 수 있습니다.");
+        }
+        validateGitHubPagesTarget(target);
+
+        String repositoryFullName = gitHubPagesTargetDefaults.repositoryFullName(target);
+        String branchName = gitHubPagesTargetDefaults.branchName(target);
+        String publicBaseUrl = defaultText(request == null ? null : request.baseUrl(), gitHubPagesTargetDefaults.resolvedPublicBaseUrl(target));
+        boolean forceOverwrite = request != null && Boolean.TRUE.equals(request.forceOverwrite());
+        List<GitHubContentFile> scaffoldFiles = jekyllSiteScaffoldFormatter.buildFiles(
+                request == null ? null : request.siteTitle(),
+                request == null ? null : request.siteDescription(),
+                request == null ? null : request.authorName(),
+                publicBaseUrl
+        );
+
+        List<GitHubContentFile> filesToCommit = new ArrayList<>();
+        List<JekyllScaffoldFileResponse> fileResponses = new ArrayList<>();
+        for (GitHubContentFile file : scaffoldFiles) {
+            boolean exists = gitHubContentsClient.contentExists(repositoryFullName, branchName, file.filePath());
+            if (exists && !forceOverwrite) {
+                fileResponses.add(new JekyllScaffoldFileResponse(file.filePath(), "SKIPPED", null));
+                continue;
+            }
+            filesToCommit.add(file);
+            fileResponses.add(new JekyllScaffoldFileResponse(file.filePath(), exists ? "UPDATED" : "CREATED", null));
+        }
+
+        String commitSha = null;
+        String commitUrl = null;
+        if (!filesToCommit.isEmpty()) {
+            List<GitHubContentCommitResult> commitResults = gitHubContentsClient.putFiles(
+                    repositoryFullName,
+                    branchName,
+                    filesToCommit,
+                    defaultText(request == null ? null : request.commitMessage(), "Initialize Jekyll tech blog")
+            );
+            Map<String, GitHubContentCommitResult> commitResultByPath = commitResults.stream()
+                    .collect(Collectors.toMap(GitHubContentCommitResult::filePath, Function.identity()));
+            fileResponses = fileResponses.stream()
+                    .map(file -> {
+                        GitHubContentCommitResult result = commitResultByPath.get(file.filePath());
+                        return result == null
+                                ? file
+                                : new JekyllScaffoldFileResponse(file.filePath(), file.action(), result.contentUrl());
+                    })
+                    .toList();
+            commitSha = commitResults.get(0).commitSha();
+            commitUrl = commitResults.get(0).commitUrl();
+        }
+
+        return new SeedJekyllSiteResponse(
+                target.getId(),
+                repositoryFullName,
+                branchName,
+                publicBaseUrl,
+                forceOverwrite,
+                fileResponses,
+                commitSha,
+                commitUrl,
                 LocalDateTime.now()
         );
     }

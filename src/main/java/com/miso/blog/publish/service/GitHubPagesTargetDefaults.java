@@ -4,6 +4,8 @@ import com.miso.blog.publish.entity.PublishTargetEntity;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import java.util.Locale;
+
 @Component
 public class GitHubPagesTargetDefaults {
     @Value("${blog.github.owner:}")
@@ -75,8 +77,21 @@ public class GitHubPagesTargetDefaults {
             return configuredBaseUrl;
         }
 
+        String resolvedRepositoryFullName = repositoryFullName(target);
+        String resolvedOwner = ownerFromRepositoryFullName(resolvedRepositoryFullName);
+        String resolvedRepositoryName = repositoryNameFromRepositoryFullName(resolvedRepositoryFullName);
         String configuredOwner = trimToNull(owner);
-        return configuredOwner == null ? null : "https://" + configuredOwner + ".github.io";
+        String publicOwner = resolvedOwner == null ? configuredOwner : resolvedOwner;
+        if (publicOwner == null) {
+            return null;
+        }
+
+        String publicOwnerForUrl = publicOwner.toLowerCase(Locale.ROOT);
+        String rootUrl = "https://" + publicOwnerForUrl + ".github.io";
+        if (resolvedRepositoryName == null || resolvedRepositoryName.equalsIgnoreCase(publicOwner + ".github.io")) {
+            return rootUrl;
+        }
+        return rootUrl + "/" + resolvedRepositoryName;
     }
 
     public String customDomain(PublishTargetEntity target) {
@@ -104,5 +119,21 @@ public class GitHubPagesTargetDefaults {
             return null;
         }
         return value.trim();
+    }
+
+    private String ownerFromRepositoryFullName(String repositoryFullName) {
+        String normalized = trimToNull(repositoryFullName);
+        if (normalized == null || !normalized.contains("/")) {
+            return null;
+        }
+        return normalized.substring(0, normalized.indexOf('/'));
+    }
+
+    private String repositoryNameFromRepositoryFullName(String repositoryFullName) {
+        String normalized = trimToNull(repositoryFullName);
+        if (normalized == null || !normalized.contains("/")) {
+            return null;
+        }
+        return normalized.substring(normalized.indexOf('/') + 1);
     }
 }

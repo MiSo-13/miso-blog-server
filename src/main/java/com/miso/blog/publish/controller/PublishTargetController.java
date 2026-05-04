@@ -7,6 +7,8 @@ import com.miso.blog.publish.dto.GitHubPagesConnectionTestResponse;
 import com.miso.blog.publish.dto.GitHubRepositoryOptionResponse;
 import com.miso.blog.publish.dto.PublishStrategyResponse;
 import com.miso.blog.publish.dto.PublishTargetResponse;
+import com.miso.blog.publish.dto.SeedJekyllSiteRequest;
+import com.miso.blog.publish.dto.SeedJekyllSiteResponse;
 import com.miso.blog.publish.dto.UpdatePublishTargetRequest;
 import com.miso.blog.publish.service.PublishTargetService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -82,5 +84,14 @@ public class PublishTargetController {
     @Operation(summary = "GitHub Pages 발행 설정 연결 테스트", description = "GitHub token, repository, branch, contentRootPath 접근 가능 여부를 확인합니다.")
     public ApiDataResponse<GitHubPagesConnectionTestResponse> testGitHubPagesConnection(@PathVariable Long targetId) {
         return ApiDataResponse.ok(publishTargetService.testGitHubPagesConnection(targetId));
+    }
+
+    @PostMapping("/{targetId}/github-pages/jekyll-scaffold")
+    @Operation(summary = "Jekyll 사이트 기본 구조 생성", description = "GitHub Pages 저장소에 _config.yml, layout, index/about, CSS 기본 파일을 commit합니다.")
+    public ApiDataResponse<SeedJekyllSiteResponse> seedJekyllSite(
+            @PathVariable Long targetId,
+            @Valid @RequestBody(required = false) SeedJekyllSiteRequest request
+    ) {
+        return ApiDataResponse.ok(publishTargetService.seedJekyllSite(targetId, request));
     }
 }
