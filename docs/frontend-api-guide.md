@@ -626,6 +626,9 @@ POST /api/blog-posts/{blogPostId}/export/velog
 DRAFT -> REVIEW_READY -> APPROVED -> PUBLISHED
 ```
 
+품질 리뷰 응답에는 기본 점수와 문제 문장 외에도 `referenceFeedback`, `referenceSentenceSuggestions`가 포함됩니다.
+저장된 레퍼런스 URL이 있으면 서버가 실제 페이지 본문 일부를 읽어 AI 리뷰에 전달하므로, 프론트에서는 이 두 필드를 “레퍼런스 반영 피드백” 영역으로 따로 보여주면 좋습니다.
+
 ### AI 결과 편집/추가 요청
 
 개발 블로그 분석 결과나 일반 블로그 AI 생성 결과를 프론트에서 보여준 뒤, 사용자는 두 가지 방식으로 다듬을 수 있습니다.
@@ -899,7 +902,9 @@ GET /api/admin/openai/estimate?model=gpt-4.1-mini&inputTokens=10000&cachedInputT
 - AI 추가 수정: `GENERAL`, `DEVELOPMENT` 레퍼런스 모두 참고
 - AI 품질 리뷰/자동 개선: `GENERAL`, `DEVELOPMENT` 레퍼런스 모두 참고
 
-서버가 URL 본문을 직접 크롤링하지는 않습니다. AI에는 사용자가 저장한 `title`, `url`, `description`, `tags`만 전달됩니다. 프론트에서는 URL만 넣기보다 “왜 참고해야 하는지”를 `description`에 짧게 적게 해주는 UI가 좋습니다.
+서버는 AI 호출 직전에 활성 레퍼런스 URL 중 최근 항목 일부를 실제로 요청해 페이지 제목, 메타 설명, 핵심 문단 발췌를 추출합니다.
+HTML/Text 응답만 처리하며, 접속 실패나 이미지/PDF 같은 비텍스트 응답은 실패 사유만 AI에 전달합니다.
+프론트에서는 URL만 넣기보다 “왜 참고해야 하는지”를 `description`에 짧게 적게 해주는 UI가 여전히 좋습니다.
 
 ### 레퍼런스 타입
 
@@ -952,6 +957,19 @@ GET /api/blog-reference-urls?type=GENERAL
 - 검색/필터: 제목, 태그, 활성 여부
 - 활성 토글: AI 참고 여부를 빠르게 켜고 끄기
 - 설명 입력란: AI가 URL을 어떻게 참고해야 하는지 적는 메모
+- 안내 문구: 활성 레퍼런스는 AI 호출 시 실제 페이지 본문 일부를 확인하므로 응답이 조금 늦어질 수 있음
+
+### AI 품질 리뷰 레퍼런스 필드
+
+`POST /api/blog-posts/{blogPostId}/quality-review/ai` 응답에는 레퍼런스 기반 피드백 필드가 포함됩니다.
+
+| 필드 | 설명 | 프론트 표시 권장 |
+| --- | --- | --- |
+| `referenceFeedback` | 실제 레퍼런스 발췌문과 현재 글을 비교한 피드백. 잘 반영한 점, 놓친 관찰 포인트, 근거가 약한 단정이 들어갑니다. | “레퍼런스 반영 피드백” 카드 |
+| `referenceSentenceSuggestions` | 레퍼런스에서 배울 만한 문장 구조나 표현 방향. 긴 원문 복사가 아니라 작성 전략 위주입니다. | “문장 구조 참고” 리스트 |
+
+이 필드가 빈 배열이면 표시하지 않아도 됩니다.
+품질 자동 개선 API는 이 피드백을 내부 수정 지시에도 반영하므로, 프론트에서는 사용자가 별도로 복사하지 않아도 됩니다.
 
 ### 레퍼런스 URL 수정
 

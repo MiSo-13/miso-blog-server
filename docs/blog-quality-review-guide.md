@@ -42,10 +42,15 @@ POST /api/blog-posts/{blogPostId}/quality-review/ai
   "unsupportedClaims": ["예약하지 않고 방문하면 자리를 잡기 어려울 것 같다는 생각이 들었습니다."],
   "aiLikePhrases": ["음식 만족도가 높아 성수동 데이트 맛집으로 손색없었습니다."],
   "monetizationSuggestions": ["지도 링크와 관련 글 내부 링크 추가"],
+  "referenceFeedback": ["저장된 레퍼런스는 공간 분위기를 먼저 묘사한 뒤 메뉴 경험으로 넘어가는데, 현재 글은 메뉴 평가가 먼저 나와 흐름이 조금 급합니다."],
+  "referenceSentenceSuggestions": ["레퍼런스의 긴 문장을 그대로 복사하지 말고, '처음 들어갔을 때 느껴진 분위기'처럼 관찰 지점을 먼저 여는 구조를 참고하세요."],
   "revisionInstruction": "예약 관련 문장은 개인 경험임을 명확히 하고 단정 표현을 완화하세요.",
   "modelName": "gpt-4.1-mini"
 }
 ```
+
+저장된 레퍼런스 URL이 있으면 서버가 AI 호출 직전에 해당 URL을 요청해 페이지 제목, 메타 설명, 핵심 문단 발췌를 프롬프트에 포함합니다.
+접속 실패나 HTML이 아닌 응답은 실패 사유만 전달하고, AI가 본문을 읽은 것처럼 꾸미지 않도록 제한합니다.
 
 ## 프론트 연동 흐름
 
