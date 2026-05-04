@@ -436,6 +436,7 @@ POST /api/git-repositories/{repositoryId}/analyze
 
 일반 블로그는 맛집, 식당, 카페, 여행, 제품 리뷰, 일상 글처럼 Git 분석과 무관한 글을 작성하는 흐름입니다.
 기본 작성 대상은 네이버 블로그이며, 초안은 네이버 블로그 본문에 붙여넣기 좋은 짧은 문단과 자연스러운 후기체를 우선합니다.
+네이버 API 설정이 있으면 카테고리와 키워드에 맞는 네이버 블로그 검색 상위 글을 AI 호출 시점에 참고해 제목/도입부/구조 패턴을 함께 반영합니다.
 
 목표는 AI가 티 나지 않는 자연스러운 초안을 만들고, 사용자가 실제 경험과 표현을 조금 더해 최종 발행 가능한 글로 다듬는 것입니다.
 
@@ -598,6 +599,7 @@ AI 티가 덜 나는 글을 만들려면 `memo`가 가장 중요합니다.
 
 키워드는 검색 유입을 위한 힌트입니다. 너무 많이 넣기보다 4~8개 정도를 권장합니다.
 네이버 블로그용 초안에서는 같은 키워드를 반복해 늘어놓기보다, 제목/도입부/소제목에 자연스럽게 녹이는 방식이 더 안전합니다.
+네이버 상위 글 참고 검색어는 `placeName`, `addressHint`, `keywords`, `category`를 조합해 서버가 자동으로 만듭니다. 사용자가 검색 의도를 잘 드러내는 키워드를 넣을수록 비교 품질이 좋아집니다.
 
 ### 4. 일반 블로그 결과 화면
 
@@ -672,6 +674,7 @@ POST /api/blog-posts/{blogPostId}/quality-review/ai
 저장된 일반/개발 블로그 레퍼런스 URL이 있으면 서버가 AI 호출 직전에 실제 페이지를 열어 제목, 설명, 핵심 문단을 추출합니다.
 리뷰 결과의 `referenceFeedback`과 `referenceSentenceSuggestions`에서 현재 글이 레퍼런스의 문장 흐름과 관찰 포인트를 얼마나 잘 반영했는지 확인할 수 있습니다.
 일반 블로그에서는 추가로 `naverBlogFeedback`, `naverBlogTitleSuggestions`, `naverBlogStructureSuggestions`가 내려옵니다. 제목 후보, 도입부 보완, 모바일 문단 길이, 사진 설명, 키워드 자연스러움을 “네이버 블로그 최적화” 카드로 보여주면 좋습니다.
+네이버 API 설정이 있으면 `naverTrendFeedback`, `naverTrendTitlePatterns`, `naverTrendStructurePatterns`도 내려옵니다. 프론트에서는 “상위 글 비교” 카드로 보여주되, 조회수 기반 인기글이 아니라 네이버 검색 API 상위 결과라는 안내를 함께 표시하세요.
 
 자동 개선:
 

@@ -30,6 +30,19 @@ github:
     # analyzeAllCommits=true일 때 최대 몇 개 commit까지 훑을지 제한합니다.
     max-all-commits: 300
 
+naver:
+  # 네이버 블로그 검색 API Client ID/Secret입니다.
+  # 일반 블로그 초안/품질 리뷰에서 카테고리와 키워드 기반 상위 블로그 글을 참고할 때 사용합니다.
+  client-id:
+  client-secret:
+  blog-search-enabled: true
+  # 네이버 공식 API의 display는 최대 100이지만, AI 컨텍스트 비용을 줄이기 위해 서버에서는 최대 10개로 제한합니다.
+  blog-search-display: 5
+  # sim: 정확도순, date: 날짜순
+  blog-search-sort: sim
+  # 검색 결과 중 실제 본문 확인을 시도할 상위 개수입니다.
+  blog-search-content-fetch-limit: 3
+
 blog:
   local-repositories:
     # Docker 배포에서는 GitHub에서 선택한 저장소가 이 경로 아래로 clone됩니다.

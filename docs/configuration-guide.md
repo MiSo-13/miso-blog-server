@@ -40,6 +40,14 @@ github:
   analysis:
     max-all-commits: 300
 
+naver:
+  client-id: 네이버 개발자센터 Client ID
+  client-secret: 네이버 개발자센터 Client Secret
+  blog-search-enabled: true
+  blog-search-display: 5
+  blog-search-sort: sim
+  blog-search-content-fetch-limit: 3
+
 blog:
   local-repositories:
     clone-base-dir: /app/repositories
@@ -58,6 +66,8 @@ GitHub Pages 발행을 사용하려면 `github.token`에 대상 저장소 `Conte
 `MiSo-13/tech-blog`처럼 project Pages 저장소를 고정하려면 `pages-repository-full-name: MiSo-13/tech-blog`, `pages-branch: main`, `pages-content-root-path: _posts`를 사용합니다. `pages-base-url`을 비워두면 서버가 `https://miso-13.github.io/tech-blog`로 추론합니다. custom domain을 연결했다면 `pages-custom-domain` 또는 발행 대상의 `customDomain`을 설정하세요.
 
 `github.analysis.max-all-commits`는 GitHub 저장소 분석에서 `analyzeAllCommits=true`를 사용할 때 최대 몇 개 commit까지 조회할지 정합니다. 값이 너무 크면 GitHub API 호출과 OpenAI 분석 시간이 길어질 수 있으므로 기본값 300에서 시작하는 것을 권장합니다.
+
+네이버 블로그 상위 글 참고 기능을 사용하려면 네이버 개발자센터 Search API 애플리케이션의 Client ID/Secret을 `naver.client-id`, `naver.client-secret`에 설정합니다. 서버는 블로그 검색 API의 `display`, `sort=sim/date`를 사용하며, AI 컨텍스트 비용을 줄이기 위해 `blog-search-display`는 서버에서 최대 10개로 제한합니다.
 
 로컬 Git 분석은 서버가 접근 가능한 로컬 경로를 직접 읽습니다. 자주 분석할 프로젝트는 `blog.local-repositories.defaults`에 후보로 적어두면 프론트에서 `GET /api/local-repositories/defaults`로 불러와 선택 UI를 만들 수 있습니다. 이 값도 개인 PC 경로라서 `application-private.yml`에서만 관리하는 것을 권장합니다.
 
@@ -87,6 +97,12 @@ Docker 배포에서는 사용자 PC의 `C:\...` 경로를 컨테이너가 직접
 | `GITHUB_PAGES_BASE_URL` | GitHub Pages 공개 URL |
 | `GITHUB_PAGES_CUSTOM_DOMAIN` | 자체 도메인 |
 | `GITHUB_ANALYSIS_MAX_ALL_COMMITS` | 전체 GitHub 분석 모드에서 조회할 최대 commit 수. 기본값 300 |
+| `NAVER_CLIENT_ID` | 네이버 Search API Client ID |
+| `NAVER_CLIENT_SECRET` | 네이버 Search API Client Secret |
+| `NAVER_BLOG_SEARCH_ENABLED` | 네이버 블로그 상위 글 참고 사용 여부 |
+| `NAVER_BLOG_SEARCH_DISPLAY` | 네이버 블로그 검색 결과 개수. 서버 최대 10 |
+| `NAVER_BLOG_SEARCH_SORT` | `sim` 정확도순 또는 `date` 날짜순 |
+| `NAVER_BLOG_SEARCH_CONTENT_FETCH_LIMIT` | 검색 결과 중 실제 본문 확인을 시도할 개수 |
 | `BLOG_LOCAL_REPOSITORY_CLONE_BASE_DIR` | GitHub에서 선택한 분석 대상 repo를 clone할 컨테이너 내부 경로 |
 | `BLOG_MEDIA_UPLOAD_DIR` | 블로그 이미지 저장 경로 |
 | `BLOG_MEDIA_PUBLIC_URL_PREFIX` | 이미지 public URL prefix |

@@ -542,6 +542,8 @@ POST /api/blog-posts/draft/manual
 
 일반 블로그 초안은 기본적으로 네이버 블로그 게시를 기준으로 작성됩니다. 서버는 네이버 서치어드바이저의 [SEO 기본 가이드](https://searchadvisor.naver.com/guide/seo-help) 방향에 맞춰 고유하고 간결한 제목, 검색 스니펫처럼 읽히는 요약, 짧은 모바일 문단, 자연스러운 키워드, 구체적인 이미지 설명을 우선하도록 AI에 지시합니다. 제목은 `BlogPostResponse.title`에 따로 내려가므로 `contentMarkdown` 첫 줄에서 `# 제목`을 반복하지 않는 흐름을 권장합니다.
 
+`NAVER_CLIENT_ID`, `NAVER_CLIENT_SECRET`이 설정되어 있으면 서버는 네이버 공식 [블로그 검색 API](https://developers.naver.com/docs/serviceapi/search/blog/blog.md)를 AI 호출 시점에 요청합니다. `category`, `placeName`, `addressHint`, `keywords`로 검색어를 만들고 상위 블로그 글의 제목/요약/작성일을 참고 자료로 전달합니다. 가능한 경우 상위 일부 URL은 실제 본문 일부도 읽지만, 조회수/좋아요 기반 “진짜 인기순”이 아니라 검색 API의 정확도순 또는 날짜순 상위 노출 근사치입니다.
+
 ```http
 POST /api/blog-posts/draft/ai-general
 ```
@@ -628,8 +630,8 @@ POST /api/blog-posts/{blogPostId}/export/velog
 DRAFT -> REVIEW_READY -> APPROVED -> PUBLISHED
 ```
 
-품질 리뷰 응답에는 기본 점수와 문제 문장 외에도 `referenceFeedback`, `referenceSentenceSuggestions`, `naverBlogFeedback`, `naverBlogTitleSuggestions`, `naverBlogStructureSuggestions`가 포함됩니다.
-저장된 레퍼런스 URL이 있으면 서버가 실제 페이지 본문 일부를 읽어 AI 리뷰에 전달하므로, 프론트에서는 레퍼런스 필드를 “레퍼런스 반영 피드백” 영역으로, 네이버 블로그 필드를 “네이버 블로그 최적화” 영역으로 따로 보여주면 좋습니다.
+품질 리뷰 응답에는 기본 점수와 문제 문장 외에도 `referenceFeedback`, `referenceSentenceSuggestions`, `naverBlogFeedback`, `naverBlogTitleSuggestions`, `naverBlogStructureSuggestions`, `naverTrendFeedback`, `naverTrendTitlePatterns`, `naverTrendStructurePatterns`가 포함됩니다.
+저장된 레퍼런스 URL이 있으면 서버가 실제 페이지 본문 일부를 읽어 AI 리뷰에 전달하므로, 프론트에서는 레퍼런스 필드를 “레퍼런스 반영 피드백” 영역으로, 네이버 블로그 필드를 “네이버 블로그 최적화” 영역으로, 트렌드 필드를 “상위 글 비교” 영역으로 따로 보여주면 좋습니다.
 
 ### AI 결과 편집/추가 요청
 
@@ -1045,6 +1047,9 @@ GET /api/blog-reference-urls?type=GENERAL
 | `naverBlogFeedback` | 네이버 블로그 기준의 제목, 도입부, 문단 길이, 키워드 자연스러움, 사진 설명, 독자 도움성 피드백입니다. | “네이버 블로그 최적화” 카드 |
 | `naverBlogTitleSuggestions` | 네이버 블로그 검색 유입을 고려한 제목 후보 2~4개입니다. 낚시성 제목이나 키워드 반복을 피하는 방향입니다. | 제목 후보 선택/복사 리스트 |
 | `naverBlogStructureSuggestions` | 모바일에서 읽기 좋은 소제목 순서, 빠진 섹션, 사진 배치 보완 제안입니다. | 본문 구조 체크리스트 |
+| `naverTrendFeedback` | 네이버 블로그 검색 API 상위 글과 현재 글을 비교한 피드백입니다. 검색 의도, 정보 배치, 도입부/사진 흐름, 모방 위험을 포함합니다. | “상위 글 비교” 카드 |
+| `naverTrendTitlePatterns` | 상위 글 제목에서 관찰한 패턴을 그대로 베끼지 않고 활용하는 전략입니다. | 제목 전략 리스트 |
+| `naverTrendStructurePatterns` | 상위 글의 소제목, 사진, 정보 배치 패턴을 작성 전략으로 정리한 값입니다. | 구조 참고 리스트 |
 
 이 필드가 빈 배열이면 표시하지 않아도 됩니다.
 품질 자동 개선 API는 이 피드백을 내부 수정 지시에도 반영하므로, 프론트에서는 사용자가 별도로 복사하지 않아도 됩니다.

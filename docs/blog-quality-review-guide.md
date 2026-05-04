@@ -48,6 +48,9 @@ POST /api/blog-posts/{blogPostId}/quality-review/ai
   "naverBlogFeedback": ["제목에 장소와 핵심 경험은 들어가지만 '맛집' 키워드가 반복되어 조금 광고처럼 보입니다.", "도입부가 짧아 검색 유입 독자가 방문 맥락을 이해하기 어렵습니다."],
   "naverBlogTitleSuggestions": ["성수동 파스타 후기, 조용한 분위기와 트러플 크림 파스타", "성수 데이트 맛집으로 다녀온 파스타집 솔직 후기"],
   "naverBlogStructureSuggestions": ["도입부 다음에 공간 분위기 소제목을 먼저 두고, 메뉴 후기는 사진과 함께 배치하세요.", "마무리에는 추천 대상과 직접 확인이 필요한 정보를 분리하세요."],
+  "naverTrendFeedback": ["상위 노출 글들은 도입부에서 방문 목적과 분위기를 먼저 설명하는데, 현재 글은 메뉴 장점으로 바로 들어가 검색 의도 대응이 약합니다."],
+  "naverTrendTitlePatterns": ["장소 + 핵심 메뉴 + 분위기를 한 번에 담되, '맛집'을 반복하지 않는 제목이 많습니다."],
+  "naverTrendStructurePatterns": ["공간 분위기, 대표 메뉴 사진, 아쉬운 점, 추천 대상 순서로 정보가 배치되는 흐름을 참고하세요."],
   "revisionInstruction": "예약 관련 문장은 개인 경험임을 명확히 하고 단정 표현을 완화하세요.",
   "modelName": "gpt-4.1-mini"
 }
@@ -57,6 +60,8 @@ POST /api/blog-posts/{blogPostId}/quality-review/ai
 접속 실패나 HTML이 아닌 응답은 실패 사유만 전달하고, AI가 본문을 읽은 것처럼 꾸미지 않도록 제한합니다.
 
 일반 블로그는 네이버 블로그 게시를 기본 전제로 리뷰합니다. `naverBlogFeedback`, `naverBlogTitleSuggestions`, `naverBlogStructureSuggestions`는 프론트에서 별도 카드로 보여주면 좋고, 개발 블로그처럼 네이버 후기 기준이 핵심이 아닌 글에서는 빈 배열일 수 있습니다.
+
+`NAVER_CLIENT_ID`, `NAVER_CLIENT_SECRET`이 설정되어 있으면 서버는 품질 리뷰 시점에 네이버 블로그 검색 상위 글을 함께 참고합니다. 결과는 `naverTrendFeedback`, `naverTrendTitlePatterns`, `naverTrendStructurePatterns`에 반영됩니다. 이 값은 조회수 기반 인기글 랭킹이 아니라 네이버 블로그 검색 API의 정확도순 또는 날짜순 상위 결과를 사용한 근사 피드백입니다.
 
 ## 프론트 연동 흐름
 
