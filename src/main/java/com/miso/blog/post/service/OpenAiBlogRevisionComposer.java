@@ -71,9 +71,11 @@ public class OpenAiBlogRevisionComposer {
                                     개발 블로그와 일반 블로그를 모두 다룬다.
                                     반드시 JSON 객체로만 응답한다.
                                     응답 필드는 title, summary, contentMarkdown, tags 이다.
-                                    기존 글의 핵심 사실과 사용자가 제공한 근거를 유지한다.
-                                    사용자가 새로 요청한 수정사항을 우선 반영하되, 없는 사실은 추가하지 않는다.
-                                    Markdown 구조를 유지하고 읽기 좋은 제목, 소제목, 문단으로 재작성한다.
+                                     기존 글의 핵심 사실과 사용자가 제공한 근거를 유지한다.
+                                     사용자가 새로 요청한 수정사항을 우선 반영하되, 없는 사실은 추가하지 않는다.
+                                     Markdown 구조를 유지하고 읽기 좋은 제목, 소제목, 문단으로 재작성한다.
+                                     일반 블로그는 네이버 블로그에 붙여넣기 좋게 간결하고 고유한 제목, 짧은 문단, 자연스러운 키워드, 구체적인 사진 설명을 우선한다.
+                                     네이버 검색 노출만을 위한 키워드 반복, 숨겨진 키워드 나열, 무관한 인기 키워드 끼워넣기는 하지 않는다.
                                      실제 URL, 전화번호, 가격, 메뉴, 영업시간이 제공되지 않았다면 임시값이나 예시값을 만들지 않는다.
                                      `#`, `example.com`, `02-0000-0000` 같은 placeholder 정보는 본문에 넣지 않는다.
                                      Reference URLs에 실제 본문 발췌가 있으면 현재 글을 더 자연스럽게 고치는 참고 자료로 쓰되, 긴 문장을 그대로 베끼지 않는다.
@@ -136,6 +138,7 @@ public class OpenAiBlogRevisionComposer {
                 현재 제목: %s
                 현재 요약: %s
                 현재 태그: %s
+                생성/출처 메모: %s
                 유지 옵션:
                 - 제목 유지: %s
                 - 태그 유지: %s
@@ -152,12 +155,20 @@ public class OpenAiBlogRevisionComposer {
                 이전 저장 글 참고:
                 %s
 
+                작성 기준:
+                - 생성/출처 메모가 "일반 블로그 AI 작성 결과"이거나 내용상 맛집/카페/여행/제품/일상 후기라면 네이버 블로그용 글로 다듬는다.
+                - 일반 블로그 제목은 장소/대상명, 핵심 경험, 검색 의도를 과하지 않게 담고 낚시성 표현을 피한다.
+                - 일반 블로그 본문은 모바일에서 읽기 좋게 문단을 짧게 나누고, 같은 키워드를 억지로 반복하지 않는다.
+                - 사진 URL이나 사진 자리표시가 있으면 장면/메뉴/공간이 드러나는 설명을 유지하거나 보완한다.
+                - 개발 블로그라면 기술 근거와 구현 맥락을 우선하고, 네이버 후기체로 바꾸지 않는다.
+
                 현재 Markdown:
                 %s
                 """.formatted(
                 blogPost.getTitle(),
                 valueOrDefault(blogPost.getSummary(), "(없음)"),
                 writeJsonQuietly(currentTags),
+                valueOrDefault(blogPost.getSourceNote(), "(없음)"),
                 Boolean.TRUE.equals(request.preserveTitle()),
                 Boolean.TRUE.equals(request.preserveTags()),
                 secretMaskingService.mask(request.revisionInstruction()),

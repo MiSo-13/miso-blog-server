@@ -18,6 +18,9 @@ public record BlogPostQualityReviewResponse(
         List<String> monetizationSuggestions,
         List<String> referenceFeedback,
         List<String> referenceSentenceSuggestions,
+        List<String> naverBlogFeedback,
+        List<String> naverBlogTitleSuggestions,
+        List<String> naverBlogStructureSuggestions,
         String revisionInstruction,
         String rawResponse,
         String modelName

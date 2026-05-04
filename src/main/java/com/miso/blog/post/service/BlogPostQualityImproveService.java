@@ -137,17 +137,28 @@ public class BlogPostQualityImproveService {
                  레퍼런스 문장/구조 참고:
                  %s
 
+                 네이버 블로그 피드백:
+                 %s
+
+                 네이버 블로그 제목 후보:
+                 %s
+
+                 네이버 블로그 구조 보완:
+                 %s
+
                  수정 지시:
                  %s
 
                 주의:
                 - 사용자가 주지 않은 사실, 가격, 메뉴, 기능, 장애 상황은 새로 만들지 마세요.
                 - 실제 URL이 제공되지 않은 예약 링크, 지도 링크, 제휴 링크를 만들지 마세요. `#`, `링크`, `example.com` 같은 임시 링크도 넣지 마세요.
-                - 실제 전화번호가 제공되지 않았다면 `02-0000-0000` 같은 예시 번호를 만들지 마세요.
-                - 수익화 제안은 실제 정보가 없으면 본문에 가짜 링크로 넣지 말고, "방문 전 공식 채널에서 확인"처럼 안전하게 표현하세요.
-                - 부족한 정보는 단정하지 말고 경험 기반 표현이나 확인 필요 표현으로 완화하세요.
-                - 광고 문구처럼 과장하지 말고 사람이 쓴 후기나 개발 기록처럼 구체적으로 정리하세요.
-                """.formatted(
+                 - 실제 전화번호가 제공되지 않았다면 `02-0000-0000` 같은 예시 번호를 만들지 마세요.
+                 - 수익화 제안은 실제 정보가 없으면 본문에 가짜 링크로 넣지 말고, "방문 전 공식 채널에서 확인"처럼 안전하게 표현하세요.
+                 - 부족한 정보는 단정하지 말고 경험 기반 표현이나 확인 필요 표현으로 완화하세요.
+                 - 광고 문구처럼 과장하지 말고 사람이 쓴 후기나 개발 기록처럼 구체적으로 정리하세요.
+                 - 일반 블로그는 네이버 블로그에 붙여넣기 좋게 짧은 문단, 자연스러운 키워드, 구체적인 사진 설명, 과하지 않은 제목으로 다듬으세요.
+                 - 네이버 검색 노출만을 위한 키워드 반복이나 무관한 인기 키워드는 넣지 마세요.
+                 """.formatted(
                 round,
                 valueOrDefault(request.minimumHumanNaturalnessScore(), 82),
                 valueOrDefault(request.minimumFactualGroundingScore(), 85),
@@ -160,6 +171,9 @@ public class BlogPostQualityImproveService {
                 review.monetizationSuggestions(),
                 review.referenceFeedback(),
                 review.referenceSentenceSuggestions(),
+                review.naverBlogFeedback(),
+                review.naverBlogTitleSuggestions(),
+                review.naverBlogStructureSuggestions(),
                 baseInstruction
         );
     }

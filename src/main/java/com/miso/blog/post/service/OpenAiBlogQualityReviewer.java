@@ -67,16 +67,17 @@ public class OpenAiBlogQualityReviewer {
                                     "system",
                                     "content",
                                     """
-                                    너는 한국어 블로그 편집장, SEO 리뷰어, 수익화 전략 리뷰어다.
-                                    글이 AI가 쓴 것처럼 보이는지, 입력 근거 없이 단정한 문장이 있는지,
-                                    검색 유입과 수익화 준비가 되었는지 냉정하게 평가한다.
-                                    반드시 JSON 객체로만 응답한다.
+                                    너는 한국어 블로그 편집장, 네이버 블로그 SEO 리뷰어, 수익화 전략 리뷰어다.
+                                     글이 AI가 쓴 것처럼 보이는지, 입력 근거 없이 단정한 문장이 있는지,
+                                    네이버 블로그 검색 유입과 수익화 준비가 되었는지 냉정하게 평가한다.
+                                     반드시 JSON 객체로만 응답한다.
 
                                      응답 필드:
                                      verdict, humanNaturalnessScore, factualGroundingScore, readabilityScore,
                                      seoReadinessScore, monetizationReadinessScore, publishReady,
                                      strengths, issues, unsupportedClaims, aiLikePhrases,
                                      monetizationSuggestions, referenceFeedback, referenceSentenceSuggestions,
+                                     naverBlogFeedback, naverBlogTitleSuggestions, naverBlogStructureSuggestions,
                                      revisionInstruction
 
                                      점수는 0~100 정수다. publishReady는 사람 검토 없이 발행해도 안전한 수준일 때만 true다.
@@ -85,6 +86,11 @@ public class OpenAiBlogQualityReviewer {
                                      잘 반영된 점, 놓친 내용, 과하게 베낀 듯한 표현, 부정확한 단정을 구체적으로 적는다.
                                      referenceSentenceSuggestions에는 레퍼런스에서 배울 만한 문장 구조나 표현 방향을 적되,
                                      긴 문장을 그대로 복사하지 말고 짧은 표현 조각이나 작성 전략으로만 제안한다.
+                                     naverBlogFeedback에는 네이버 블로그에 맞는 제목, 도입부, 문단 길이, 키워드 자연스러움,
+                                     사진 설명, 독자 도움성, 복사/중복 느낌 여부를 구체적으로 평가한다.
+                                     naverBlogTitleSuggestions에는 네이버 블로그용 제목 후보를 2~4개 제안한다.
+                                     naverBlogStructureSuggestions에는 네이버 블로그에서 읽기 좋은 소제목 순서와 보완 섹션을 제안한다.
+                                     일반 블로그가 아닌 개발 블로그라면 naverBlog 계열 필드는 빈 배열로 두거나, 제목/구조 수준의 최소 제안만 한다.
                                      revisionInstruction은 POST /revise/ai에 바로 넣을 수 있는 한국어 수정 지시문으로 작성한다.
                                      """
                             ),
@@ -135,6 +141,9 @@ public class OpenAiBlogQualityReviewer {
                     readStringList(result.path("monetizationSuggestions")),
                     readStringList(result.path("referenceFeedback")),
                     readStringList(result.path("referenceSentenceSuggestions")),
+                    readStringList(result.path("naverBlogFeedback")),
+                    readStringList(result.path("naverBlogTitleSuggestions")),
+                    readStringList(result.path("naverBlogStructureSuggestions")),
                     textOrDefault(result, "revisionInstruction", ""),
                     content,
                     model
@@ -159,6 +168,7 @@ public class OpenAiBlogQualityReviewer {
                 태그: %s
                 목표 독자: %s
                 수익화 목표: %s
+                생성/출처 메모: %s
 
                 원본 입력/메모:
                 %s
@@ -172,6 +182,12 @@ public class OpenAiBlogQualityReviewer {
                  - 일반 블로그는 입력에 없는 메뉴, 가격, 대기, 예약, 재료, 영업 정보, 방문 전 확인 과정 같은 추정 문장을 찾는다.
                  - 수익화 관점에서는 검색 의도, 체류 시간, 이미지 배치, 내부 링크와 제휴 링크 후보, 독자 행동 유도 가능성을 본다.
                  - 광고성 과장보다 신뢰가 있는 개인 경험 문체를 우선한다.
+                  - 일반 블로그는 네이버 블로그에 올릴 글로 보고, 검색 유입 독자에게 도움이 되는 정보와 개인 관찰이 균형 있는지 본다.
+                  - 생성/출처 메모가 "일반 블로그 AI 작성 결과"이거나 내용상 맛집/카페/여행/제품/일상 후기라면 네이버 블로그 기준을 우선 적용한다.
+                  - 제목과 요약은 간결하고 고유한지, 키워드가 자연스럽게 들어갔는지, 낚시성/과도한 반복이 없는지 본다.
+                 - 네이버 블로그 모바일 독자를 고려해 문단이 너무 길지 않은지, 소제목 흐름이 검색 의도와 맞는지 본다.
+                 - 사진 또는 이미지 자리표시자가 있으면 장면을 설명하는 대체 문구가 충분한지 본다.
+                 - 검색 노출만을 위한 키워드 남용, 무관한 인기 키워드, 복사한 듯한 레퍼런스 표현은 문제로 지적한다.
                  - Reference URLs의 실제 본문 발췌를 현재 글과 비교해 어떤 표현/구조를 배울지, 어떤 문장은 근거가 약한지 세심하게 피드백한다.
                  - 레퍼런스 문장을 길게 그대로 복사하라고 지시하지 않는다. 자연스러운 문장 구조와 관찰 포인트만 제안한다.
 
@@ -183,6 +199,7 @@ public class OpenAiBlogQualityReviewer {
                 writeJsonQuietly(tags),
                 valueOrDefault(request == null ? null : request.targetReader(), "(지정 없음)"),
                 valueOrDefault(request == null ? null : request.monetizationGoal(), "검색 유입과 장기 수익화"),
+                valueOrDefault(blogPost.getSourceNote(), "(없음)"),
                 secretMaskingService.mask(valueOrDefault(request == null ? null : request.originalInputMemo(), "(없음)")),
                 blogPostMemoryContextService.buildRecentPostContext(blogPost.getId())
                         + "\n\nReference URLs:\n"
