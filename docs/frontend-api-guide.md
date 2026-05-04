@@ -777,6 +777,7 @@ PATCH /api/publish-targets/{targetId}
 GET /api/publish-targets/github/repositories
 GET /api/publish-targets/github/branches?repositoryFullName=user/user.github.io
 POST /api/publish-targets/{targetId}/test-github-pages
+POST /api/publish-targets/{targetId}/github-pages/jekyll-scaffold
 ```
 
 기본 흐름은 `application-private.yml`에 GitHub token과 owner만 넣고, 프론트에서 저장소와 브랜치를 선택하는 방식입니다.
@@ -843,6 +844,22 @@ GitHub Pages 대상에는 최종적으로 다음 값이 저장되어야 합니�
 }
 ```
 
+`MiSo-13/tech-blog` 같은 project Pages 저장소를 사용할 때는 `baseUrl`을 비워도 서버가 `https://miso-13.github.io/tech-blog` 형태로 추론합니다. 직접 고정하고 싶다면 아래처럼 저장하면 됩니다.
+
+```json
+{
+  "channel": "GITHUB_PAGES",
+  "role": "PRIMARY",
+  "name": "Tech Blog",
+  "baseUrl": "https://miso-13.github.io/tech-blog",
+  "repositoryFullName": "MiSo-13/tech-blog",
+  "branchName": "main",
+  "contentRootPath": "_posts",
+  "customDomain": null,
+  "active": true
+}
+```
+
 ### GitHub Pages 연결 테스트
 
 ```http
@@ -860,6 +877,8 @@ POST /api/publish-targets/{targetId}/test-github-pages
   "branchName": "main",
   "contentRootPath": "_posts",
   "success": true,
+  "branchExists": true,
+  "jekyllReady": true,
   "checkedItems": ["repository", "branch", "contentRootPath"],
   "warnings": [],
   "repositoryUrl": "https://github.com/user/user.github.io",
@@ -871,6 +890,60 @@ POST /api/publish-targets/{targetId}/test-github-pages
 ```
 
 프론트에서는 발행 설정 화면에 테스트 버튼을 두고, 성공 전까지 실제 발행 버튼을 비활성화하는 것을 권장합니다. 현재 target에 `repositoryFullName`이 비어 있어도 서버 private 설정의 `github.owner`가 있으면 `owner/owner.github.io`로 추론합니다.
+
+빈 저장소나 Jekyll 기본 파일이 없는 저장소는 `branchExists=false` 또는 `jekyllReady=false`와 함께 경고가 내려올 수 있습니다. 이 경우 아래 Jekyll 초기화 API를 먼저 실행하세요.
+
+### Jekyll 사이트 초기화
+
+```http
+POST /api/publish-targets/{targetId}/github-pages/jekyll-scaffold
+```
+
+GitHub Pages 저장소에 다음 파일을 commit합니다.
+
+- `_config.yml`
+- `index.md`
+- `about.md`
+- `_layouts/default.html`
+- `_layouts/post.html`
+- `assets/css/style.css`
+
+요청 예시:
+
+```json
+{
+  "siteTitle": "MiSo Tech Blog",
+  "siteDescription": "개발하며 배운 점을 기록하는 기술 블로그입니다.",
+  "authorName": "MiSo",
+  "baseUrl": "https://miso-13.github.io/tech-blog",
+  "forceOverwrite": false,
+  "commitMessage": "Initialize Jekyll tech blog"
+}
+```
+
+`forceOverwrite=false`이면 이미 존재하는 파일은 건드리지 않고 `SKIPPED`로 응답합니다. 빈 저장소처럼 `main` 브랜치가 아직 없는 경우 서버가 첫 commit과 브랜치를 함께 생성합니다.
+
+응답 예시:
+
+```json
+{
+  "targetId": 1,
+  "repositoryFullName": "MiSo-13/tech-blog",
+  "branchName": "main",
+  "publicBaseUrl": "https://miso-13.github.io/tech-blog",
+  "forceOverwrite": false,
+  "files": [
+    {
+      "filePath": "_config.yml",
+      "action": "CREATED",
+      "contentUrl": "https://github.com/MiSo-13/tech-blog/blob/main/_config.yml"
+    }
+  ],
+  "commitSha": "abc123",
+  "commitUrl": "https://github.com/MiSo-13/tech-blog/commit/abc123",
+  "seededAt": "2026-05-04T21:00:00"
+}
+```
 
 ## OpenAI 운영 API
 

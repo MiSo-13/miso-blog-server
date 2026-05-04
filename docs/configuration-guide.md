@@ -55,6 +55,8 @@ GitHub Pages 발행을 사용하려면 `github.token`에 대상 저장소 `Conte
 
 기본 흐름은 `github.token`, `github.owner`만 private에 입력하고, 프론트에서 저장소와 브랜치를 선택하는 방식입니다. 직접 고정하고 싶을 때만 `pages-repository-name` 또는 `pages-repository-full-name`을 입력하세요.
 
+`MiSo-13/tech-blog`처럼 project Pages 저장소를 고정하려면 `pages-repository-full-name: MiSo-13/tech-blog`, `pages-branch: main`, `pages-content-root-path: _posts`를 사용합니다. `pages-base-url`을 비워두면 서버가 `https://miso-13.github.io/tech-blog`로 추론합니다. custom domain을 연결했다면 `pages-custom-domain` 또는 발행 대상의 `customDomain`을 설정하세요.
+
 `github.analysis.max-all-commits`는 GitHub 저장소 분석에서 `analyzeAllCommits=true`를 사용할 때 최대 몇 개 commit까지 조회할지 정합니다. 값이 너무 크면 GitHub API 호출과 OpenAI 분석 시간이 길어질 수 있으므로 기본값 300에서 시작하는 것을 권장합니다.
 
 로컬 Git 분석은 서버가 접근 가능한 로컬 경로를 직접 읽습니다. 자주 분석할 프로젝트는 `blog.local-repositories.defaults`에 후보로 적어두면 프론트에서 `GET /api/local-repositories/defaults`로 불러와 선택 UI를 만들 수 있습니다. 이 값도 개인 PC 경로라서 `application-private.yml`에서만 관리하는 것을 권장합니다.

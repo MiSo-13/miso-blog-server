@@ -49,8 +49,9 @@ Miso Blog Server는 사용자의 Git 저장소에서 실제 구현 기록을 읽
 
 ## 발행 전략
 
-- GitHub Pages: 원본 발행 채널입니다. 서버가 보관한 Markdown을 GitHub Pages 저장소의 `_posts` 경로에 commit하는 방식을 목표로 합니다.
-- 현재 GitHub Pages 발행은 GitHub Contents API로 `_posts/yyyy-MM-dd-slug.md` 파일을 생성하거나 갱신합니다.
+- GitHub Pages: 원본 발행 채널입니다. 서버가 보관한 Markdown을 Jekyll 저장소의 `_posts` 경로에 commit합니다.
+- 현재 GitHub Pages 발행은 GitHub Git Data API로 `_posts/yyyy-MM-dd-slug.md` 파일을 생성하거나 갱신합니다. 완전히 빈 저장소는 GitHub ref 생성 제한이 있어 첫 파일만 Contents API로 만든 뒤 나머지 파일을 다중 파일 commit으로 이어갑니다.
+- Jekyll 초기화 API로 `_config.yml`, `index.md`, `about.md`, `_layouts/default.html`, `_layouts/post.html`, `assets/css/style.css` 기본 구조를 seed할 수 있습니다.
 - 자체 도메인: GitHub Pages에 연결된 custom domain을 기본 공개 주소로 사용합니다.
 - Velog: 개발자 독자층 노출을 위한 보조 채널입니다. 서버의 Markdown 원본을 기반으로 재발행하거나 수동 업로드할 수 있게 설계합니다.
 - 현재 Velog는 자동 발행 대신 title, markdown, tags를 복사하기 쉬운 export API를 제공합니다.

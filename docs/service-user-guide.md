@@ -726,6 +726,7 @@ GET /api/publish-targets/github/repositories
 GET /api/publish-targets/github/branches?repositoryFullName=owner/repo
 PATCH /api/publish-targets/{targetId}
 POST /api/publish-targets/{targetId}/test-github-pages
+POST /api/publish-targets/{targetId}/github-pages/jekyll-scaffold
 ```
 
 권장 화면 흐름:
@@ -735,9 +736,13 @@ POST /api/publish-targets/{targetId}/test-github-pages
 3. 저장소 선택 후 브랜치 목록 조회
 4. `_posts` 같은 content root path 입력
 5. 연결 테스트 실행
-6. 성공 시 발행 버튼 활성화
+6. `jekyllReady=false`이면 Jekyll 초기화 실행
+7. 성공 시 발행 버튼 활성화
 
 연결 테스트는 실제 파일을 쓰지 않고 읽기 권한과 경로만 확인합니다.
+Jekyll 초기화는 `_config.yml`, `index.md`, `about.md`, `_layouts/default.html`, `_layouts/post.html`, `assets/css/style.css`를 commit합니다. 이미 파일이 있는 repo는 `forceOverwrite=false`로 호출해 기존 커스터마이징을 보존하세요.
+
+`MiSo-13/tech-blog`처럼 사용자 페이지 저장소가 아닌 project Pages 저장소는 공개 주소가 `https://miso-13.github.io/tech-blog` 형태입니다. 서버는 `repositoryFullName`을 보고 이 주소를 자동 계산하지만, 프론트 설정 화면에서 `baseUrl`에 명시해도 됩니다.
 
 ### 3. 승인 후 GitHub Pages 발행
 

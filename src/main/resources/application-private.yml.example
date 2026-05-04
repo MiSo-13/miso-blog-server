@@ -17,6 +17,8 @@ github:
   token:
   # repositoryFullName을 DB에 넣지 않아도 아래 값으로 GitHub Pages 대상을 추론할 수 있습니다.
   # owner만 입력하면 owner/owner.github.io 저장소를 기본값으로 사용합니다.
+  # project Pages 저장소를 고정하려면 pages-repository-full-name: MiSo-13/tech-blog 처럼 입력합니다.
+  # 이 경우 pages-base-url을 비워도 서버가 https://miso-13.github.io/tech-blog 형태로 추론합니다.
   owner:
   pages-repository-name:
   pages-repository-full-name:
