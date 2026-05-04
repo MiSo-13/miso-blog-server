@@ -540,6 +540,8 @@ POST /api/blog-posts/draft/manual
 
 맛집, 식당, 카페, 여행, 제품 리뷰, 일상 글처럼 Git 분석과 무관한 일반 블로그 초안을 생성합니다. 사용자가 사진 URL/설명, 꼭 넣어야 할 문구, 메모, 키워드를 입력하면 AI가 전체 Markdown 초안을 만들고 기존 `BlogPost`로 저장합니다.
 
+일반 블로그 초안은 기본적으로 네이버 블로그 게시를 기준으로 작성됩니다. 서버는 네이버 서치어드바이저의 [SEO 기본 가이드](https://searchadvisor.naver.com/guide/seo-help) 방향에 맞춰 고유하고 간결한 제목, 검색 스니펫처럼 읽히는 요약, 짧은 모바일 문단, 자연스러운 키워드, 구체적인 이미지 설명을 우선하도록 AI에 지시합니다. 제목은 `BlogPostResponse.title`에 따로 내려가므로 `contentMarkdown` 첫 줄에서 `# 제목`을 반복하지 않는 흐름을 권장합니다.
+
 ```http
 POST /api/blog-posts/draft/ai-general
 ```
@@ -626,8 +628,8 @@ POST /api/blog-posts/{blogPostId}/export/velog
 DRAFT -> REVIEW_READY -> APPROVED -> PUBLISHED
 ```
 
-품질 리뷰 응답에는 기본 점수와 문제 문장 외에도 `referenceFeedback`, `referenceSentenceSuggestions`가 포함됩니다.
-저장된 레퍼런스 URL이 있으면 서버가 실제 페이지 본문 일부를 읽어 AI 리뷰에 전달하므로, 프론트에서는 이 두 필드를 “레퍼런스 반영 피드백” 영역으로 따로 보여주면 좋습니다.
+품질 리뷰 응답에는 기본 점수와 문제 문장 외에도 `referenceFeedback`, `referenceSentenceSuggestions`, `naverBlogFeedback`, `naverBlogTitleSuggestions`, `naverBlogStructureSuggestions`가 포함됩니다.
+저장된 레퍼런스 URL이 있으면 서버가 실제 페이지 본문 일부를 읽어 AI 리뷰에 전달하므로, 프론트에서는 레퍼런스 필드를 “레퍼런스 반영 피드백” 영역으로, 네이버 블로그 필드를 “네이버 블로그 최적화” 영역으로 따로 보여주면 좋습니다.
 
 ### AI 결과 편집/추가 요청
 
@@ -959,14 +961,17 @@ GET /api/blog-reference-urls?type=GENERAL
 - 설명 입력란: AI가 URL을 어떻게 참고해야 하는지 적는 메모
 - 안내 문구: 활성 레퍼런스는 AI 호출 시 실제 페이지 본문 일부를 확인하므로 응답이 조금 늦어질 수 있음
 
-### AI 품질 리뷰 레퍼런스 필드
+### AI 품질 리뷰 레퍼런스/네이버 필드
 
-`POST /api/blog-posts/{blogPostId}/quality-review/ai` 응답에는 레퍼런스 기반 피드백 필드가 포함됩니다.
+`POST /api/blog-posts/{blogPostId}/quality-review/ai` 응답에는 레퍼런스 기반 피드백과 네이버 블로그 맞춤 피드백 필드가 포함됩니다.
 
 | 필드 | 설명 | 프론트 표시 권장 |
 | --- | --- | --- |
 | `referenceFeedback` | 실제 레퍼런스 발췌문과 현재 글을 비교한 피드백. 잘 반영한 점, 놓친 관찰 포인트, 근거가 약한 단정이 들어갑니다. | “레퍼런스 반영 피드백” 카드 |
 | `referenceSentenceSuggestions` | 레퍼런스에서 배울 만한 문장 구조나 표현 방향. 긴 원문 복사가 아니라 작성 전략 위주입니다. | “문장 구조 참고” 리스트 |
+| `naverBlogFeedback` | 네이버 블로그 기준의 제목, 도입부, 문단 길이, 키워드 자연스러움, 사진 설명, 독자 도움성 피드백입니다. | “네이버 블로그 최적화” 카드 |
+| `naverBlogTitleSuggestions` | 네이버 블로그 검색 유입을 고려한 제목 후보 2~4개입니다. 낚시성 제목이나 키워드 반복을 피하는 방향입니다. | 제목 후보 선택/복사 리스트 |
+| `naverBlogStructureSuggestions` | 모바일에서 읽기 좋은 소제목 순서, 빠진 섹션, 사진 배치 보완 제안입니다. | 본문 구조 체크리스트 |
 
 이 필드가 빈 배열이면 표시하지 않아도 됩니다.
 품질 자동 개선 API는 이 피드백을 내부 수정 지시에도 반영하므로, 프론트에서는 사용자가 별도로 복사하지 않아도 됩니다.

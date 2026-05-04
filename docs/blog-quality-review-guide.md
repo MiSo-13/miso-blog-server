@@ -7,6 +7,7 @@
 - AI가 쓴 것처럼 보이는 일반론, 과장, 반복 표현
 - 입력 메모나 Git 분석 근거 없이 단정한 문장
 - 읽기 흐름과 검색 유입 준비도
+- 일반 블로그의 네이버 블로그 제목, 도입부, 문단 길이, 사진 설명, 키워드 자연스러움
 - 장기 수익화를 위한 링크, 이미지, 독자 행동 유도 가능성
 
 ## API
@@ -44,6 +45,9 @@ POST /api/blog-posts/{blogPostId}/quality-review/ai
   "monetizationSuggestions": ["지도 링크와 관련 글 내부 링크 추가"],
   "referenceFeedback": ["저장된 레퍼런스는 공간 분위기를 먼저 묘사한 뒤 메뉴 경험으로 넘어가는데, 현재 글은 메뉴 평가가 먼저 나와 흐름이 조금 급합니다."],
   "referenceSentenceSuggestions": ["레퍼런스의 긴 문장을 그대로 복사하지 말고, '처음 들어갔을 때 느껴진 분위기'처럼 관찰 지점을 먼저 여는 구조를 참고하세요."],
+  "naverBlogFeedback": ["제목에 장소와 핵심 경험은 들어가지만 '맛집' 키워드가 반복되어 조금 광고처럼 보입니다.", "도입부가 짧아 검색 유입 독자가 방문 맥락을 이해하기 어렵습니다."],
+  "naverBlogTitleSuggestions": ["성수동 파스타 후기, 조용한 분위기와 트러플 크림 파스타", "성수 데이트 맛집으로 다녀온 파스타집 솔직 후기"],
+  "naverBlogStructureSuggestions": ["도입부 다음에 공간 분위기 소제목을 먼저 두고, 메뉴 후기는 사진과 함께 배치하세요.", "마무리에는 추천 대상과 직접 확인이 필요한 정보를 분리하세요."],
   "revisionInstruction": "예약 관련 문장은 개인 경험임을 명확히 하고 단정 표현을 완화하세요.",
   "modelName": "gpt-4.1-mini"
 }
@@ -51,6 +55,8 @@ POST /api/blog-posts/{blogPostId}/quality-review/ai
 
 저장된 레퍼런스 URL이 있으면 서버가 AI 호출 직전에 해당 URL을 요청해 페이지 제목, 메타 설명, 핵심 문단 발췌를 프롬프트에 포함합니다.
 접속 실패나 HTML이 아닌 응답은 실패 사유만 전달하고, AI가 본문을 읽은 것처럼 꾸미지 않도록 제한합니다.
+
+일반 블로그는 네이버 블로그 게시를 기본 전제로 리뷰합니다. `naverBlogFeedback`, `naverBlogTitleSuggestions`, `naverBlogStructureSuggestions`는 프론트에서 별도 카드로 보여주면 좋고, 개발 블로그처럼 네이버 후기 기준이 핵심이 아닌 글에서는 빈 배열일 수 있습니다.
 
 ## 프론트 연동 흐름
 
