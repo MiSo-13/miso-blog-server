@@ -72,16 +72,21 @@ public class OpenAiBlogQualityReviewer {
                                     검색 유입과 수익화 준비가 되었는지 냉정하게 평가한다.
                                     반드시 JSON 객체로만 응답한다.
 
-                                    응답 필드:
-                                    verdict, humanNaturalnessScore, factualGroundingScore, readabilityScore,
-                                    seoReadinessScore, monetizationReadinessScore, publishReady,
-                                    strengths, issues, unsupportedClaims, aiLikePhrases,
-                                    monetizationSuggestions, revisionInstruction
+                                     응답 필드:
+                                     verdict, humanNaturalnessScore, factualGroundingScore, readabilityScore,
+                                     seoReadinessScore, monetizationReadinessScore, publishReady,
+                                     strengths, issues, unsupportedClaims, aiLikePhrases,
+                                     monetizationSuggestions, referenceFeedback, referenceSentenceSuggestions,
+                                     revisionInstruction
 
-                                    점수는 0~100 정수다. publishReady는 사람 검토 없이 발행해도 안전한 수준일 때만 true다.
-                                    근거 없는 주장처럼 보이는 문장은 unsupportedClaims에 구체적으로 적는다.
-                                    revisionInstruction은 POST /revise/ai에 바로 넣을 수 있는 한국어 수정 지시문으로 작성한다.
-                                    """
+                                     점수는 0~100 정수다. publishReady는 사람 검토 없이 발행해도 안전한 수준일 때만 true다.
+                                     근거 없는 주장처럼 보이는 문장은 unsupportedClaims에 구체적으로 적는다.
+                                     referenceFeedback에는 저장된 레퍼런스의 실제 본문 발췌와 현재 글을 비교해,
+                                     잘 반영된 점, 놓친 내용, 과하게 베낀 듯한 표현, 부정확한 단정을 구체적으로 적는다.
+                                     referenceSentenceSuggestions에는 레퍼런스에서 배울 만한 문장 구조나 표현 방향을 적되,
+                                     긴 문장을 그대로 복사하지 말고 짧은 표현 조각이나 작성 전략으로만 제안한다.
+                                     revisionInstruction은 POST /revise/ai에 바로 넣을 수 있는 한국어 수정 지시문으로 작성한다.
+                                     """
                             ),
                             Map.of(
                                     "role",
@@ -128,6 +133,8 @@ public class OpenAiBlogQualityReviewer {
                     readStringList(result.path("unsupportedClaims")),
                     readStringList(result.path("aiLikePhrases")),
                     readStringList(result.path("monetizationSuggestions")),
+                    readStringList(result.path("referenceFeedback")),
+                    readStringList(result.path("referenceSentenceSuggestions")),
                     textOrDefault(result, "revisionInstruction", ""),
                     content,
                     model
@@ -159,15 +166,17 @@ public class OpenAiBlogQualityReviewer {
                 이전 저장 글 참고:
                 %s
 
-                리뷰 기준:
-                - AI가 쓴 듯한 일반론, 과장된 칭찬, 반복 표현을 찾는다.
-                - 개발 블로그는 실제 구현 근거가 빈약한 기술 설명과 추상적인 결론을 찾는다.
-                - 일반 블로그는 입력에 없는 메뉴, 가격, 대기, 예약, 재료, 영업 정보, 방문 전 확인 과정 같은 추정 문장을 찾는다.
-                - 수익화 관점에서는 검색 의도, 체류 시간, 이미지 배치, 내부 링크와 제휴 링크 후보, 독자 행동 유도 가능성을 본다.
-                - 광고성 과장보다 신뢰가 있는 개인 경험 문체를 우선한다.
+                 리뷰 기준:
+                 - AI가 쓴 듯한 일반론, 과장된 칭찬, 반복 표현을 찾는다.
+                 - 개발 블로그는 실제 구현 근거가 빈약한 기술 설명과 추상적인 결론을 찾는다.
+                 - 일반 블로그는 입력에 없는 메뉴, 가격, 대기, 예약, 재료, 영업 정보, 방문 전 확인 과정 같은 추정 문장을 찾는다.
+                 - 수익화 관점에서는 검색 의도, 체류 시간, 이미지 배치, 내부 링크와 제휴 링크 후보, 독자 행동 유도 가능성을 본다.
+                 - 광고성 과장보다 신뢰가 있는 개인 경험 문체를 우선한다.
+                 - Reference URLs의 실제 본문 발췌를 현재 글과 비교해 어떤 표현/구조를 배울지, 어떤 문장은 근거가 약한지 세심하게 피드백한다.
+                 - 레퍼런스 문장을 길게 그대로 복사하라고 지시하지 않는다. 자연스러운 문장 구조와 관찰 포인트만 제안한다.
 
-                Markdown 본문:
-                %s
+                 Markdown 본문:
+                 %s
                 """.formatted(
                 blogPost.getTitle(),
                 valueOrDefault(blogPost.getSummary(), "(없음)"),

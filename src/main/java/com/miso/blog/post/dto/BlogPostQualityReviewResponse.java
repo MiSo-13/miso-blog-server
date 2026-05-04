@@ -16,6 +16,8 @@ public record BlogPostQualityReviewResponse(
         List<String> unsupportedClaims,
         List<String> aiLikePhrases,
         List<String> monetizationSuggestions,
+        List<String> referenceFeedback,
+        List<String> referenceSentenceSuggestions,
         String revisionInstruction,
         String rawResponse,
         String modelName

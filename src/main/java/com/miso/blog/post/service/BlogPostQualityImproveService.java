@@ -128,11 +128,17 @@ public class BlogPostQualityImproveService {
                 근거 없이 보이는 문장:
                 %s
 
-                수익화 보완 제안:
-                %s
+                 수익화 보완 제안:
+                 %s
 
-                수정 지시:
-                %s
+                 레퍼런스 피드백:
+                 %s
+
+                 레퍼런스 문장/구조 참고:
+                 %s
+
+                 수정 지시:
+                 %s
 
                 주의:
                 - 사용자가 주지 않은 사실, 가격, 메뉴, 기능, 장애 상황은 새로 만들지 마세요.
@@ -152,6 +158,8 @@ public class BlogPostQualityImproveService {
                 review.aiLikePhrases(),
                 review.unsupportedClaims(),
                 review.monetizationSuggestions(),
+                review.referenceFeedback(),
+                review.referenceSentenceSuggestions(),
                 baseInstruction
         );
     }

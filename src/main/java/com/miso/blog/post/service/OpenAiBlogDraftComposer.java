@@ -78,9 +78,10 @@ public class OpenAiBlogDraftComposer {
                                     반드시 JSON 객체로만 응답한다.
                                     응답 필드는 title, summary, contentMarkdown, tags 이다.
                                     contentMarkdown은 Markdown 본문이며, 문제 배경, 구현 선택, 코드 흐름, 트러블슈팅 포인트, 배운 점을 포함한다.
-                                    제공된 source summary 밖의 사실은 단정하지 않는다.
-                                    코드 전체를 길게 복사하지 말고, 필요한 경우 파일 경로와 흐름 중심으로 설명한다.
-                                    """
+                                     제공된 source summary 밖의 사실은 단정하지 않는다.
+                                     코드 전체를 길게 복사하지 말고, 필요한 경우 파일 경로와 흐름 중심으로 설명한다.
+                                     Reference URLs에 실제 본문 발췌가 있으면 글의 구조, 설명 방식, 독자 배려 포인트를 참고하되 긴 문장을 그대로 복사하지 않는다.
+                                     """
                             ),
                             Map.of(
                                     "role",
